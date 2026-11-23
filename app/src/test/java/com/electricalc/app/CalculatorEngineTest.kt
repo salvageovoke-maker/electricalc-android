@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CalculatorEngineTest {
-    @Test fun phaseOneCatalogHasSixteenCalculators() { assertEquals(16, CalculatorCatalog.all.size) }
+    @Test fun phaseOneCatalogHasSixteenCalculators() { assertEquals(33, CalculatorCatalog.all.size) }
     @Test fun solvesOhmsLawVoltage() {
         val r=CalculatorCatalog.solve("ohms","V",mapOf("I" to 2.0,"R" to 10.0))
         assertEquals(20.0,r.value,1e-9)
@@ -24,5 +24,32 @@ class CalculatorEngineTest {
     }
     @Test(expected=IllegalArgumentException::class) fun rejectsZeroResistance() {
         CalculatorCatalog.solve("ohms","I",mapOf("V" to 12.0,"R" to 0.0))
+    }
+    @Test fun phaseTwoCatalogHasFifteenCalculators() {
+        assertEquals(17, CalculatorCatalog.all.size - 16)
+    }
+    @Test fun solvesBalancedThreePhasePower() {
+        val r=CalculatorCatalog.solve("threepower","P",mapOf("V" to 400.0,"I" to 10.0,"pf" to 0.8))
+        assertEquals(5542.5626,r.value,1e-3)
+    }
+    @Test fun solvesStarPhaseVoltage() {
+        val r=CalculatorCatalog.solve("starvoltage","Vph",mapOf("VL" to 400.0))
+        assertEquals(230.9401,r.value,1e-3)
+    }
+    @Test fun solvesDeltaLineCurrent() {
+        val r=CalculatorCatalog.solve("deltacurrent","IL",mapOf("Iph" to 10.0))
+        assertEquals(17.3205,r.value,1e-3)
+    }
+    @Test fun solvesDeltaLineVoltage() {
+        val r=CalculatorCatalog.solve("deltavoltage","VL",mapOf("Vph" to 400.0))
+        assertEquals(400.0,r.value,1e-9)
+    }
+    @Test fun solvesTransformerFullLoadCurrent() {
+        val r=CalculatorCatalog.solve("tflcurrent","I",mapOf("S" to 500.0,"V" to 11000.0))
+        assertEquals(26.243,r.value,1e-3)
+    }
+    @Test fun solvesTransformerEfficiency() {
+        val r=CalculatorCatalog.solve("efficiency","η",mapOf("Pout" to 9500.0,"Pin" to 10000.0))
+        assertEquals(95.0,r.value,1e-9)
     }
 }
