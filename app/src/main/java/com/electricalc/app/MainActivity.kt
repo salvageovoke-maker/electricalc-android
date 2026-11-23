@@ -64,7 +64,7 @@ private fun ElectriCalcApp(){
         }
     }){padding->
         when{
-            calc!=null->CalculatorScreen(calc!!,answer,error,favorites.contains(calc!!.id),
+            calc!=null->CalculatorScreen(calc!!,answer,error,favorites.contains(calc!!.id),Modifier.padding(padding),
                 onBack={calc=null;answer=null;error=null},
                 onFavorite={if(favorites.contains(calc!!.id))favorites.remove(calc!!.id)else favorites.add(calc!!.id)},
                 onCalculate={u,values->try{answer=CalculatorCatalog.solve(calc!!.id,u,values);error=null}catch(e:Exception){answer=null;error=e.message?: "Check your inputs."}},
@@ -107,7 +107,7 @@ private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onC
 @Composable
 private fun CategoryScreen(category:String,modifier:Modifier,onBack:()->Unit,onSelect:(CalcSpec)->Unit){
     val list=CalculatorCatalog.all.filter{it.category==category}
-    Column(modifier.fillMaxSize().padding(18.dp)){
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)};Text(category,fontSize=21.sp,fontWeight=FontWeight.Bold)}
         if(list.isEmpty())Text("Calculators for this category will be added in a later phase.",color=Muted,modifier=Modifier.padding(16.dp))
         else{
@@ -127,12 +127,12 @@ private fun CategoryScreen(category:String,modifier:Modifier,onBack:()->Unit,onS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
+private fun CalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
     var unknown by remember(calc.id){mutableStateOf(calc.fields.first().key)}
     val entries=remember(calc.id){mutableStateMapOf<String,String>()}
     var expanded by remember{mutableStateOf(false)}
     val known=calc.fields.filter{it.key!=unknown}
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp)){
+    Column(modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(start=18.dp,end=18.dp,top=18.dp,bottom=110.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){
             IconButton(onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
             Column(Modifier.weight(1f)){Text(calc.name,fontSize=20.sp,fontWeight=FontWeight.Bold);Text(calc.category,color=Muted,fontSize=12.sp)}
