@@ -1,15 +1,12 @@
 name: Build ElectriCalc Android APK
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   build:
     name: Test and build APK
@@ -18,7 +15,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
