@@ -10,8 +10,8 @@ android {
         applicationId = "com.electricalc.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.9.4"
+        versionCode = 15
+        versionName = "1.9.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -31,4 +31,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

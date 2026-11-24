@@ -108,3 +108,8 @@ All 10 conversion tools use a source unit, one input value, and a target unit. T
 
 ## Version 1.9.4
 - Fixed the Favorites build error by declaring the hoisted favorites collection as `MutableList<String>`, matching the add/remove operations used by the calculator screen. Persistent local storage is retained.
+
+
+## Version 1.9.5
+- Fixed local unit-test runtime support for JSON-based Favorites persistence tests by adding the JSON implementation to the test classpath.
+- No change to app runtime storage or user data format.
