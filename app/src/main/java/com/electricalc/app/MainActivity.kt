@@ -149,6 +149,7 @@ private val categories=listOf(
     Category("Three-Phase Systems","Three-phase voltage, current and power"),
     Category("Transformers","Turns ratio, loading and efficiency"),
     Category("Power Distribution","Cables, voltage drop and loads"),
+    Category("Cable Sizing & Ampacity","Cable current capacity, derating and voltage drop"),
     Category("Electrical Machines","Motors, generators and slip"),
     Category("Energy & Consumption","Energy use and operating cost"),
     Category("Conversions","Electrical units and quantities")
@@ -160,6 +161,7 @@ private fun categoryIcon(name:String):ImageVector = when(name){
     "Three-Phase Systems" -> Icons.Default.DeviceHub
     "Transformers" -> Icons.Default.Transform
     "Power Distribution" -> Icons.Default.AccountTree
+    "Cable Sizing & Ampacity" -> Icons.Default.AccountTree
     "Electrical Machines" -> Icons.Default.PrecisionManufacturing
     "Energy & Consumption" -> Icons.Default.Speed
     "Conversions" -> Icons.Default.SwapHoriz
@@ -430,8 +432,184 @@ private fun SettingsScreen(
     }
 }
 
+
+@Composable
+private fun CableSizingScreen(modifier:Modifier,onBack:()->Unit){
+    var phases by remember { mutableIntStateOf(3) }
+    var power by remember { mutableStateOf("30") }
+    var voltage by remember { mutableStateOf("400") }
+    var pf by remember { mutableStateOf("0.85") }
+    var efficiency by remember { mutableStateOf("90") }
+    var ampacity by remember { mutableStateOf("70") }
+    var ambient by remember { mutableStateOf("0.94") }
+    var grouping by remember { mutableStateOf("0.80") }
+    var installation by remember { mutableStateOf("1.00") }
+    var other by remember { mutableStateOf("1.00") }
+    var length by remember { mutableStateOf("50") }
+    var mv by remember { mutableStateOf("1.0") }
+    var resistance by remember { mutableStateOf("0.387") }
+    var maxDrop by remember { mutableStateOf("5") }
+    var result by remember { mutableStateOf<CableSizingResult?>(null) }
+    var automaticResult by remember { mutableStateOf<AutomaticCableResult?>(null) }
+    var autoMode by remember { mutableStateOf(true) }
+    var conductor by remember { mutableStateOf(CableConductor.COPPER) }
+    var insulation by remember { mutableStateOf(CableInsulation.PVC) }
+    var method by remember { mutableStateOf(CableInstallationMethod.B2) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    @Composable
+    fun field(label:String,value:String,onValue:(String)->Unit,unit:String="",hint:String=""){
+        OutlinedTextField(
+            value=value,onValueChange={onValue(it);result=null;automaticResult=null;error=null},
+            modifier=Modifier.fillMaxWidth().padding(top=8.dp),
+            label={Text(label)},suffix={if(unit.isNotEmpty())Text(unit)},
+            supportingText={if(hint.isNotEmpty())Text(hint)},
+            singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal)
+        )
+    }
+    Column(modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=18.dp,vertical=14.dp)){
+        Row(verticalAlignment=Alignment.CenterVertically){
+            IconButton(onClick){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
+            Column(Modifier.weight(1f)){
+                Text("Cable Sizing & Ampacity",fontSize=20.sp,fontWeight=FontWeight.Bold)
+                Text("Preliminary cable design check",fontSize=12.sp,color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f))
+            }
+        }
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth().padding(top=12.dp)) {
+            FilterChip(selected=autoMode,onClick={autoMode=true;result=null;automaticResult=null;error=null},label={Text("Automatic size")})
+            FilterChip(selected=!autoMode,onClick={autoMode=false;result=null;automaticResult=null;error=null},label={Text("Manual ampacity")})
+        }
+        Text(if(autoMode)"Automatic cable selection" else "Manual cable check",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(top=8.dp))
+        if(autoMode){
+            Text("The app selects the smallest listed standard size that passes both checks.",fontSize=12.sp,color=Muted)
+            Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth().padding(top=8.dp)) {
+                listOf(CableConductor.COPPER,CableConductor.ALUMINIUM).forEach { item ->
+                    FilterChip(selected=conductor==item,onClick={conductor=item;automaticResult=null},label={Text(if(item==CableConductor.COPPER)"Copper" else "Aluminium")})
+                }
+            }
+            Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()) {
+                listOf(CableInsulation.PVC,CableInsulation.XLPE).forEach { item ->
+                    FilterChip(selected=insulation==item,onClick={insulation=item;automaticResult=null},label={Text(item.name)})
+                }
+            }
+            var methodExpanded by remember { mutableStateOf(false) }
+            Box(Modifier.fillMaxWidth().padding(top=8.dp)) {
+                OutlinedButton(onClick={methodExpanded=true},modifier=Modifier.fillMaxWidth()) { Text("Installation: ${method.name} · ${method.label.substringAfter("· ")}") }
+                DropdownMenu(expanded=methodExpanded,onDismissRequest={methodExpanded=false}) {
+                    CableInstallationMethod.values().forEach { item ->
+                        DropdownMenuItem(text={Text(item.label)},onClick={method=item;methodExpanded=false;automaticResult=null})
+                    }
+                }
+            }
+        }
+        Text("Load details",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(top=12.dp))
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth().padding(top=8.dp)){
+            listOf(1 to "Single-phase",3 to "Three-phase").forEach{(n,label)->
+                FilterChip(selected=phases==n,onClick={phases=n;result=null;automaticResult=null},label={Text(label)})
+            }
+        }
+        field("Load power",power,{power=it},"kW")
+        field("Supply voltage",voltage,{voltage=it},"V",if(phases==1)"Single-phase line voltage" else "Three-phase line-to-line voltage")
+        field("Power factor",pf,{pf=it},"")
+        field("Load efficiency",efficiency,{efficiency=it},"%","Use 100% for a load where efficiency is not applicable")
+        if(!autoMode){
+            Text("Cable current capacity",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(top=18.dp))
+            field("Tabulated cable ampacity (Iz)",ampacity,{ampacity=it},"A","Enter the reference current rating from the applicable cable table or manufacturer data")
+        }
+        Text("Correction factors",fontWeight=FontWeight.SemiBold,modifier=Modifier.padding(top=12.dp))
+        field("Ambient temperature factor",ambient,{ambient=it},"k₁")
+        field("Grouping factor",grouping,{grouping=it},"k₂")
+        if(!autoMode) field("Installation / soil factor",installation,{installation=it},"k₃","Use the factor applicable to your installation method")
+        field("Other correction factor",other,{other=it},"k₄","Use 1.00 when no additional correction applies")
+        Text("Voltage drop and losses",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(top=18.dp))
+        field("One-way cable length",length,{length=it},"m")
+        if(!autoMode){
+            field("Voltage-drop coefficient",mv,{mv=it},"mV/A/m","Use the coefficient for the selected cable, phase arrangement and power factor")
+            field("Conductor resistance",resistance,{resistance=it},"Ω/km","Use operating-temperature resistance where available")
+        }
+        field("Maximum permitted voltage drop",maxDrop,{maxDrop=it},"%")
+        Button(onClick={
+            try{
+                if(autoMode){
+                    automaticResult=AutomaticCableSizer.calculate(AutomaticCableInput(
+                        power.toDouble(),voltage.toDouble(),pf.toDouble(),efficiency.toDouble(),phases,
+                        conductor,insulation,method,ambient.toDouble(),grouping.toDouble(),other.toDouble(),
+                        length.toDouble(),maxDrop.toDouble()
+                    ))
+                    result=null
+                } else {
+                    result=CableSizingEngine.calculate(CableSizingInput(
+                        power.toDouble(),voltage.toDouble(),pf.toDouble(),efficiency.toDouble(),phases,
+                        ampacity.toDouble(),ambient.toDouble(),grouping.toDouble(),installation.toDouble(),
+                        other.toDouble(),length.toDouble(),mv.toDouble(),resistance.toDouble(),maxDrop.toDouble()
+                    ))
+                    automaticResult=null
+                }
+                error=null
+            }catch(e:Exception){result=null;error=e.message ?: "Check the entered values."}
+        },modifier=Modifier.fillMaxWidth().padding(top=18.dp)){
+            Icon(Icons.Default.Calculate,null);Spacer(Modifier.width(8.dp));Text(if(autoMode)"Recommend cable size" else "Calculate cable check")
+        }
+        error?.let{Text(it,color=Color(0xFFFF8A80),modifier=Modifier.padding(top=10.dp))}
+        automaticResult?.let { r ->
+            Card(Modifier.fillMaxWidth().padding(top=14.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Cable size recommendation",fontWeight=FontWeight.Bold,fontSize=18.sp)
+                    Text("Design current: ${"%.2f".format(Locale.US,r.designCurrentA)} A",modifier=Modifier.padding(top=10.dp))
+                    Text("Required tabulated ampacity: ${"%.2f".format(Locale.US,r.requiredTabulatedAmpacityA)} A")
+                    if(r.recommendedSizeMm2!=null){
+                        Text("${"%.1f".format(Locale.US,r.recommendedSizeMm2)} mm²",fontSize=28.sp,fontWeight=FontWeight.Bold,color=Amber,modifier=Modifier.padding(top=8.dp))
+                        Text("${conductor.name.lowercase().replaceFirstChar{it.uppercase()}} · ${insulation.name} · ${method.name} · ${if(phases==1)"2" else "3"} loaded conductors",fontSize=12.sp,color=Muted)
+                        Text("Tabulated ampacity: ${"%.1f".format(Locale.US,r.tabulatedAmpacityA)} A")
+                        Text("Corrected ampacity: ${"%.1f".format(Locale.US,r.correctedAmpacityA)} A")
+                        HorizontalDivider(Modifier.padding(vertical=10.dp))
+                        Text("Voltage drop: ${"%.2f".format(Locale.US,r.voltageDropV)} V (${"%.2f".format(Locale.US,r.voltageDropPercent)}%)")
+                        Text("Estimated conductor losses: ${"%.1f".format(Locale.US,r.conductorLossW)} W")
+                        r.nextSizeMm2?.let { Text("Next standard size: ${"%.1f".format(Locale.US,it)} mm²",fontSize=12.sp,color=Muted,modifier=Modifier.padding(top=6.dp)) }
+                    } else {
+                        Text("No suitable size found",fontWeight=FontWeight.Bold,color=Color(0xFFFF8A80),modifier=Modifier.padding(top=8.dp))
+                    }
+                    Text(r.message,fontSize=12.sp,color=MaterialTheme.colorScheme.onSurface.copy(alpha=.72f),modifier=Modifier.padding(top=10.dp))
+                }
+            }
+        }
+        result?.let{r->
+            Card(Modifier.fillMaxWidth().padding(top=14.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)){
+                Column(Modifier.padding(16.dp)){
+                    Text("Calculation results",fontWeight=FontWeight.Bold,fontSize=18.sp)
+                    Text("Design current: ${"%.2f".format(Locale.US,r.designCurrentA)} A",fontWeight=FontWeight.SemiBold,modifier=Modifier.padding(top=10.dp))
+                    Text("Combined correction factor: ${"%.4f".format(Locale.US,r.totalCorrectionFactor)}")
+                    Text("Corrected cable ampacity: ${"%.2f".format(Locale.US,r.correctedAmpacityA)} A")
+                    Row(verticalAlignment=Alignment.CenterVertically,modifier=Modifier.padding(top=6.dp)){
+                        Icon(if(r.ampacityPass)Icons.Default.CheckCircle else Icons.Default.Warning,null,tint=if(r.ampacityPass)Color(0xFF43A047) else Color(0xFFE57373))
+                        Text(if(r.ampacityPass)" Ampacity check passed" else " Ampacity check failed",fontWeight=FontWeight.SemiBold)
+                    }
+                    HorizontalDivider(Modifier.padding(vertical=10.dp))
+                    Text("Voltage drop: ${"%.2f".format(Locale.US,r.voltageDropV)} V (${ "%.2f".format(Locale.US,r.voltageDropPercent)}%)")
+                    Row(verticalAlignment=Alignment.CenterVertically,modifier=Modifier.padding(top=6.dp)){
+                        Icon(if(r.voltageDropPass)Icons.Default.CheckCircle else Icons.Default.Warning,null,tint=if(r.voltageDropPass)Color(0xFF43A047) else Color(0xFFE57373))
+                        Text(if(r.voltageDropPass)" Voltage-drop check passed" else " Voltage-drop check failed",fontWeight=FontWeight.SemiBold)
+                    }
+                    Text("Estimated conductor losses: ${"%.2f".format(Locale.US,r.conductorLossW)} W",modifier=Modifier.padding(top=8.dp))
+                }
+            }
+        }
+        Text("Engineering note",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(top=18.dp))
+        Text(
+            if(autoMode) "Automatic selection uses IEC 60364-5-52:2009+AMD1:2024 Annex B reference ampacity tables for methods A1 to D2, at 30 °C ambient air or 20 °C ground reference conditions. Ambient, grouping and other correction factors are applied to the tabulated rating. Voltage drop and losses use a resistive conductor model at the insulation operating temperature; cable reactance and manufacturer-specific AC resistance are not included. This is a preliminary selection only. Confirm actual cable construction, protective-device coordination, short-circuit withstand, disconnection times, terminal limits, soil conditions and local requirements before installation."
+            else "Manual mode checks values that you obtain from the applicable cable tables or manufacturer data. The tabulated ampacity and correction factors must match conductor material, insulation, installation reference method, number of loaded conductors, ambient or soil conditions and grouping. Voltage-drop coefficient must match the cable and circuit arrangement. Confirm short-circuit withstand, protective-device coordination, disconnection times, terminal temperature limits and local requirements before installation.",
+            color=MaterialTheme.colorScheme.onSurface.copy(alpha=.72f),fontSize=12.sp,lineHeight=17.sp,
+            modifier=Modifier.padding(top=6.dp,bottom=28.dp)
+        )
+    }
+}
+
 @Composable
 private fun CategoryScreen(category:String,modifier:Modifier,onBack:()->Unit,onSelect:(CalcSpec)->Unit){
+    if(category=="Cable Sizing & Ampacity"){
+        CableSizingScreen(modifier,onBack)
+        return
+    }
     val list=CalculatorCatalog.all.filter{it.category==category}
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)};Text(category,fontSize=21.sp,fontWeight=FontWeight.Bold)}

@@ -113,3 +113,33 @@ All 10 conversion tools use a source unit, one input value, and a target unit. T
 ## Version 1.9.5
 - Fixed local unit-test runtime support for JSON-based Favorites persistence tests by adding the JSON implementation to the test classpath.
 - No change to app runtime storage or user data format.
+
+
+## Version 1.10.0 Cable sizing and ampacity check
+
+- Added a Cable Sizing & Ampacity tool under the home categories and navigation drawer.
+- Calculates single-phase or balanced three-phase design current from load power, voltage, power factor and efficiency.
+- Applies user-entered ambient, grouping, installation/soil and additional correction factors to the tabulated cable ampacity.
+- Checks corrected ampacity against design current.
+- Calculates voltage drop and percentage using the entered cable-specific mV/A/m coefficient.
+- Estimates conductor losses using entered conductor resistance and one-way cable length.
+- Added unit tests for current, derating, voltage drop, conductor losses and invalid inputs.
+
+Engineering scope:
+- The tool does not automatically select a conductor cross-sectional area or contain a complete IEC ampacity table. The user must enter tabulated ampacity and correction factors matching the actual conductor, insulation, installation reference method, loaded conductors and site conditions.
+- The voltage-drop coefficient must be taken from manufacturer data or a verified cable table for the actual circuit arrangement and power factor.
+- Results are preliminary checks. Short-circuit withstand, protective-device coordination, disconnection time, harmonics, terminal temperature limits, neutral sizing and applicable national requirements must be checked separately.
+
+
+## Version 1.10.1: Automatic cable-size recommendation
+
+- Added automatic standard-size selection for copper and aluminium conductors with PVC or XLPE insulation.
+- Added IEC 60364-5-52 Annex B reference ampacity datasets for two- and three-loaded-conductor circuits and installation reference methods A1, A2, B1, B2, C, D1 and D2.
+- Applies ambient, grouping and additional correction factors, then checks voltage drop before recommending the smallest listed size.
+- Retained the original manual ampacity check.
+- Added unit tests for table selection, derating, conductor/insulation combinations, voltage-drop selection and invalid inputs.
+- Automatic voltage-drop and loss estimates use a resistive conductor model. Cable reactance, manufacturer-specific AC resistance, protective-device coordination and short-circuit withstand require separate verification.
+
+Reference data consulted for the automatic ampacity tables:
+- IEC 60364-5-52:2009+AMD1:2024, Annex B, Tables B.52.2 to B.52.5 (PVC and XLPE/EPR, two or three loaded conductors): https://iso.ieclist.ink/iec/IEC%2060364-5-52-2009%2BAMD1-2024%20CSV%20PDF.pdf
+- Cross-check of table structure and reference installation methods: https://www.ti-soft.com/en/support/help/electricaldesign/standards/iec-60364-5-52/current-carrying-capacity
