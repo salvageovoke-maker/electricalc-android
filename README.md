@@ -80,3 +80,10 @@ All 10 conversion tools use a source unit, one input value, and a target unit. T
 - Only one category remains expanded at a time.
 - Formula names and expressions are displayed when a category is expanded.
 - Formula definitions and calculator registrations remain unchanged.
+
+
+## Version 1.9.1 build correction
+
+- Added safe default values for the optional history state and history callbacks in ElectriCalcApp.
+- This keeps lightweight preview or alternate entry-point calls source-compatible while the production root continues to pass the persistent history state and handlers.
+- No calculator logic, history storage, category grouping, accordion behavior, or formulas were changed.

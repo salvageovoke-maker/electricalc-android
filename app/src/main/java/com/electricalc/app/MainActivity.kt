@@ -145,8 +145,11 @@ private fun categoryIcon(name:String):ImageVector = when(name){
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ElectriCalcApp(
-    themeMode:String,precision:Int,haptics:Boolean,history:List<HistoryEntry>,
-    onHistoryAdd:(HistoryEntry)->Unit,onHistoryDelete:(String)->Unit,onHistoryClear:()->Unit,
+    themeMode:String,precision:Int,haptics:Boolean,
+    history:List<HistoryEntry> = emptyList(),
+    onHistoryAdd:(HistoryEntry)->Unit = {},
+    onHistoryDelete:(String)->Unit = {},
+    onHistoryClear:()->Unit = {},
     onThemeChange:(String)->Unit,onPrecisionChange:(Int)->Unit,onHapticsChange:(Boolean)->Unit,onResetPreferences:()->Unit
 ){
     var settingsOpen by remember{mutableStateOf(false)}
