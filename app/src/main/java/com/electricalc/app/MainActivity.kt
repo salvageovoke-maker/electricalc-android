@@ -122,7 +122,7 @@ private fun ElectriCalcRoot(){
     CompositionLocalProvider(LocalPrecision provides precision,LocalHaptics provides haptics){
         MaterialTheme(colorScheme=scheme){
             ElectriCalcApp(
-                themeMode=themeMode,precision=precision,haptics=haptics,history=history,favorites=favorites,
+                themeMode=themeMode,precision=precision,haptics=haptics,appVersion=appVersion,history=history,favorites=favorites,
                 onFavoritesChange={saveFavoriteIds(prefs,favorites)},
                 onHistoryAdd={entry->
                     history.removeAll{it.id==entry.id}
@@ -179,7 +179,8 @@ private fun ElectriCalcApp(
     onHistoryAdd:(HistoryEntry)->Unit = {},
     onHistoryDelete:(String)->Unit = {},
     onHistoryClear:()->Unit = {},
-    onThemeChange:(String)->Unit,onPrecisionChange:(Int)->Unit,onHapticsChange:(Boolean)->Unit,onResetPreferences:()->Unit
+    onThemeChange:(String)->Unit,onPrecisionChange:(Int)->Unit,onHapticsChange:(Boolean)->Unit,onResetPreferences:()->Unit,
+    appVersion:String
 ){
     var settingsOpen by remember{mutableStateOf(false)}
     var query by remember{mutableStateOf("")}
