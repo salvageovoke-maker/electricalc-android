@@ -43,3 +43,11 @@ Adds 20 calculators across Energy & Consumption and Unit Conversions, bringing t
 
 ### Conversion interface update (v1.5.0)
 All 10 conversion tools use a source unit, one input value, and a target unit. Temperature supports every direction among Celsius, Fahrenheit and Kelvin.
+
+
+## Version 1.6.0 interface update
+
+- Added a premium Graphite and Amber ElectriCalc brand icon for the Android launcher and in-app header.
+- Added distinct icons for all eight calculator categories.
+- Added a functional navigation drawer with Home, Favorites, History, Library, category shortcuts, and About ElectriCalc.
+- Preserved the existing bottom navigation and calculator screens.

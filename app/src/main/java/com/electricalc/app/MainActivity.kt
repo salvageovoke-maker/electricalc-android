@@ -16,15 +16,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 private val Graphite=Color(0xFF252B3A)
 private val CardGraphite=Color(0xFF343C4D)
@@ -47,6 +51,19 @@ private val categories=listOf(
     Category("Conversions","Electrical units and quantities")
 )
 
+private fun categoryIcon(name:String):ImageVector = when(name){
+    "Basic Electrical" -> Icons.Default.Memory
+    "AC Circuits" -> Icons.Default.GraphicEq
+    "Three-Phase Systems" -> Icons.Default.DeviceHub
+    "Transformers" -> Icons.Default.Transform
+    "Power Distribution" -> Icons.Default.AccountTree
+    "Electrical Machines" -> Icons.Default.PrecisionManufacturing
+    "Energy & Consumption" -> Icons.Default.Speed
+    "Conversions" -> Icons.Default.SwapHoriz
+    else -> Icons.Default.Calculate
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ElectriCalcApp(){
     var query by remember{mutableStateOf("")}
@@ -55,37 +72,117 @@ private fun ElectriCalcApp(){
     var calc by remember{mutableStateOf<CalcSpec?>(null)}
     var answer by remember{mutableStateOf<CalcAnswer?>(null)}
     var error by remember{mutableStateOf<String?>(null)}
+    var showAbout by remember{mutableStateOf(false)}
     val favorites=remember{mutableStateListOf<String>()}
-    Scaffold(containerColor=Graphite,bottomBar={
-        NavigationBar(containerColor=CardGraphite){
-            listOf("Home" to Icons.Default.Home,"Favorites" to Icons.Default.Favorite,"History" to Icons.Default.History,"Library" to Icons.Default.MenuBook).forEachIndexed{index,item->
-                NavigationBarItem(selected=tab==index,onClick={tab=index;category=null;calc=null},icon={Icon(item.second,null)},label={Text(item.first)},colors=NavigationBarItemDefaults.colors(selectedIconColor=Amber,selectedTextColor=Amber,indicatorColor=Graphite,unselectedIconColor=Muted,unselectedTextColor=Muted))
+    val drawerState= rememberDrawerState(DrawerValue.Closed)
+    val scope= rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState=drawerState,
+        gesturesEnabled=calc==null,
+        drawerContent={
+            ModalDrawerSheet(drawerContainerColor=CardGraphite) {
+                Row(Modifier.fillMaxWidth().padding(horizontal=20.dp,vertical=24.dp),verticalAlignment=Alignment.CenterVertically){
+                    Image(painterResource(R.drawable.electricalc_brand),contentDescription="ElectriCalc logo",modifier=Modifier.size(54.dp))
+                    Column(Modifier.padding(start=14.dp)){
+                        Text("ElectriCalc",fontSize=21.sp,fontWeight=FontWeight.Bold)
+                        Text("Electrical Calculator",color=Muted,fontSize=12.sp)
+                    }
+                }
+                HorizontalDivider(color=Muted.copy(alpha=.2f))
+                Text("MAIN MENU",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(start=20.dp,top=18.dp,bottom=8.dp))
+                val drawerItems=listOf(
+                    Triple("Home",Icons.Default.Home,0),
+                    Triple("Favorites",Icons.Default.Favorite,1),
+                    Triple("History",Icons.Default.History,2),
+                    Triple("Library",Icons.Default.MenuBook,3)
+                )
+                drawerItems.forEach{item->
+                    NavigationDrawerItem(
+                        icon={Icon(item.second,null)},
+                        label={Text(item.first)},
+                        selected=tab==item.third && category==null && calc==null,
+                        onClick={
+                            tab=item.third;category=null;calc=null;answer=null;error=null
+                            scope.launch{drawerState.close()}
+                        },
+                        modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+                        colors=NavigationDrawerItemDefaults.colors(selectedContainerColor=Graphite,selectedIconColor=Amber,selectedTextColor=Amber,unselectedIconColor=Muted,unselectedTextColor=Color.White)
+                    )
+                }
+                HorizontalDivider(Modifier.padding(vertical=12.dp),color=Muted.copy(alpha=.2f))
+                Text("CALCULATION CATEGORIES",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(start=20.dp,bottom=8.dp))
+                categories.forEach{item->
+                    NavigationDrawerItem(
+                        icon={Icon(categoryIcon(item.name),null)},
+                        label={Text(item.name)},
+                        selected=category==item.name,
+                        onClick={
+                            tab=0;category=item.name;calc=null;answer=null;error=null
+                            scope.launch{drawerState.close()}
+                        },
+                        modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+                        colors=NavigationDrawerItemDefaults.colors(selectedContainerColor=Graphite,selectedIconColor=Amber,selectedTextColor=Amber,unselectedIconColor=Muted,unselectedTextColor=Color.White)
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                HorizontalDivider(color=Muted.copy(alpha=.2f))
+                NavigationDrawerItem(
+                    icon={Icon(Icons.Default.Info,null)},
+                    label={Text("About ElectriCalc")},
+                    selected=false,
+                    onClick={showAbout=true;scope.launch{drawerState.close()}},
+                    modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+                    colors=NavigationDrawerItemDefaults.colors(unselectedIconColor=Muted,unselectedTextColor=Color.White)
+                )
+                Text("Version 1.6.0",color=Muted,fontSize=11.sp,modifier=Modifier.padding(start=22.dp,bottom=18.dp,top=4.dp))
             }
         }
-    }){padding->
-        when{
-            calc!=null->CalculatorScreen(calc!!,answer,error,favorites.contains(calc!!.id),Modifier.padding(padding),
-                onBack={calc=null;answer=null;error=null},
-                onFavorite={if(favorites.contains(calc!!.id))favorites.remove(calc!!.id)else favorites.add(calc!!.id)},
-                onCalculate={u,values->try{answer=CalculatorCatalog.solve(calc!!.id,u,values);error=null}catch(e:Exception){answer=null;error=e.message?: "Check your inputs."}},
-                onReset={answer=null;error=null})
-            category!=null->CategoryScreen(category!!,Modifier.padding(padding),{category=null},{calc=it})
-            tab==1->SavedScreen("Favorites",CalculatorCatalog.all.filter{favorites.contains(it.id)},Modifier.padding(padding)){calc=it}
-            tab==2->SavedScreen("History",emptyList(),Modifier.padding(padding)){calc=it}
-            tab==3->LibraryScreen(Modifier.padding(padding))
-            else->HomeScreen(query,{query=it},Modifier.padding(padding)){category=it}
+    ){
+        Scaffold(containerColor=Graphite,bottomBar={
+            NavigationBar(containerColor=CardGraphite){
+                listOf("Home" to Icons.Default.Home,"Favorites" to Icons.Default.Favorite,"History" to Icons.Default.History,"Library" to Icons.Default.MenuBook).forEachIndexed{index,item->
+                    NavigationBarItem(selected=tab==index,onClick={tab=index;category=null;calc=null;answer=null;error=null},icon={Icon(item.second,null)},label={Text(item.first)},colors=NavigationBarItemDefaults.colors(selectedIconColor=Amber,selectedTextColor=Amber,indicatorColor=Graphite,unselectedIconColor=Muted,unselectedTextColor=Muted))
+                }
+            }
+        }){padding->
+            when{
+                calc!=null->CalculatorScreen(calc!!,answer,error,favorites.contains(calc!!.id),Modifier.padding(padding),
+                    onBack={calc=null;answer=null;error=null},
+                    onFavorite={if(favorites.contains(calc!!.id))favorites.remove(calc!!.id)else favorites.add(calc!!.id)},
+                    onCalculate={u,values->try{answer=CalculatorCatalog.solve(calc!!.id,u,values);error=null}catch(e:Exception){answer=null;error=e.message?: "Check your inputs."}},
+                    onReset={answer=null;error=null})
+                category!=null->CategoryScreen(category!!,Modifier.padding(padding),{category=null},{calc=it})
+                tab==1->SavedScreen("Favorites",CalculatorCatalog.all.filter{favorites.contains(it.id)},Modifier.padding(padding)){calc=it}
+                tab==2->SavedScreen("History",emptyList(),Modifier.padding(padding)){calc=it}
+                tab==3->LibraryScreen(Modifier.padding(padding))
+                else->HomeScreen(query,{query=it},Modifier.padding(padding),onCategory={category=it},onMenu={scope.launch{drawerState.open()}})
+            }
         }
+    }
+    if(showAbout){
+        AlertDialog(
+            onDismissRequest={showAbout=false},
+            confirmButton={TextButton(onClick={showAbout=false}){Text("Close",color=Amber)}},
+            title={Text("About ElectriCalc")},
+            text={Text("ElectriCalc is an offline-first electrical engineering calculator. Calculations run on your device and do not require an account or an internet connection.")},
+            containerColor=CardGraphite,
+            titleContentColor=Color.White,
+            textContentColor=Muted
+        )
     }
 }
 
 @Composable
-private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onCategory:(String)->Unit){
+private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onCategory:(String)->Unit,onMenu:()->Unit){
     val shown=categories.filter{it.name.contains(query,true)||it.detail.contains(query,true)}
     Column(modifier.fillMaxSize().padding(horizontal=18.dp,vertical=16.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){
-            Box(Modifier.size(46.dp).background(Amber,RoundedCornerShape(13.dp)),contentAlignment=Alignment.Center){Icon(Icons.Default.Bolt,null,tint=Graphite,modifier=Modifier.size(30.dp))}
-            Column(Modifier.padding(start=11.dp)){Text("ElectriCalc",fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Electrical Calculator",color=Muted,fontSize=12.sp)}
-            Spacer(Modifier.weight(1f));Icon(Icons.Default.Settings,null,tint=Amber,modifier=Modifier.size(26.dp))
+            IconButton(onClick=onMenu,modifier=Modifier.size(42.dp)){Icon(Icons.Default.Menu,null,tint=Amber,modifier=Modifier.size(28.dp))}
+            Image(painterResource(R.drawable.electricalc_brand),contentDescription="ElectriCalc logo",modifier=Modifier.size(48.dp))
+            Column(Modifier.padding(start=10.dp)){Text("ElectriCalc",fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Electrical Calculator",color=Muted,fontSize=12.sp)}
+            Spacer(Modifier.weight(1f))
+            Icon(Icons.Default.Settings,null,tint=Amber,modifier=Modifier.size(25.dp))
         }
         Spacer(Modifier.height(24.dp));Text("What do you want to calculate?",fontSize=19.sp,fontWeight=FontWeight.SemiBold)
         Spacer(Modifier.height(10.dp))
@@ -95,7 +192,9 @@ private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onC
             items(shown){item->
                 Card(Modifier.fillMaxWidth().height(140.dp).clickable{onCategory(item.name)},shape=RoundedCornerShape(16.dp),colors=CardDefaults.cardColors(containerColor=CardGraphite)){
                     Column(Modifier.fillMaxSize().padding(14.dp),verticalArrangement=Arrangement.SpaceBetween){
-                        Icon(Icons.Default.Bolt,null,tint=Amber,modifier=Modifier.size(27.dp))
+                        Box(Modifier.size(42.dp).background(Graphite,RoundedCornerShape(13.dp)),contentAlignment=Alignment.Center){
+                            Icon(categoryIcon(item.name),null,tint=Amber,modifier=Modifier.size(25.dp))
+                        }
                         Column{Text(item.name,fontWeight=FontWeight.SemiBold,fontSize=14.sp);Spacer(Modifier.height(4.dp));Text(item.detail,color=Muted,fontSize=11.sp,lineHeight=15.sp)}
                     }
                 }
