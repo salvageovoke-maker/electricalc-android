@@ -171,7 +171,7 @@ private fun categoryIcon(name:String):ImageVector = when(name){
 private fun ElectriCalcApp(
     themeMode:String,precision:Int,haptics:Boolean,
     history:List<HistoryEntry> = emptyList(),
-    favorites:List<String> = emptyList(),
+    favorites:MutableList<String> = mutableListOf(),
     onFavoritesChange:()->Unit = {},
     onHistoryAdd:(HistoryEntry)->Unit = {},
     onHistoryDelete:(String)->Unit = {},

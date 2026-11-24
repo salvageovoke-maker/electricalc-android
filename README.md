@@ -104,3 +104,7 @@ All 10 conversion tools use a source unit, one input value, and a target unit. T
 - Favorite IDs are stored as JSON, deduplicated, and invalid stored data safely falls back to an empty list.
 - Existing favorite IDs remain compatible because the stored values are the existing calculator IDs.
 - Added unit tests for favorite serialization, duplicate removal, blank IDs, and malformed stored data.
+
+
+## Version 1.9.4
+- Fixed the Favorites build error by declaring the hoisted favorites collection as `MutableList<String>`, matching the add/remove operations used by the calculator screen. Persistent local storage is retained.
