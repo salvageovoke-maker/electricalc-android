@@ -39,7 +39,27 @@ object CalculatorCatalog {
         CalcSpec("tflcurrent","Transformers","Transformer Full-Load Current","Three-phase transformer rated line current",listOf(f("I","Full-load current","A"),f("S","Rated capacity","kVA"),f("V","Line voltage","V")),"I = (S × 1000) ÷ (√3 × V)"),
         CalcSpec("losses","Transformers","Transformer Losses","Total power loss from input and output",listOf(f("Loss","Total losses","W"),f("Pin","Input power","W"),f("Pout","Output power","W")),"Loss = Pin − Pout"),
         CalcSpec("impedancepct","Transformers","Transformer Percentage Impedance","Percentage impedance from short-circuit voltage",listOf(f("%Z","Percentage impedance","%"),f("Vsc","Short-circuit voltage","V"),f("Vrated","Rated voltage","V")),"%Z = (Vsc ÷ Vrated) × 100"),
-        CalcSpec("regulation","Transformers","Transformer Voltage Regulation","Voltage change from no-load to full-load",listOf(f("Reg","Voltage regulation","%"),f("Vnl","No-load voltage","V"),f("Vfl","Full-load voltage","V")),"Reg = ((Vnl − Vfl) ÷ Vfl) × 100")
+        CalcSpec("regulation","Transformers","Transformer Voltage Regulation","Voltage change from no-load to full-load",listOf(f("Reg","Voltage regulation","%"),f("Vnl","No-load voltage","V"),f("Vfl","Full-load voltage","V")),"Reg = ((Vnl − Vfl) ÷ Vfl) × 100"),
+        CalcSpec("vdrop1","Power Distribution","Single-Phase Cable Voltage Drop","Two-wire circuit voltage drop using conductor R and X per unit length",listOf(f("VD","Voltage drop","V"),f("I","Load current","A"),f("L","One-way cable length","m"),f("R","Conductor resistance","Ω/km"),f("X","Conductor reactance","Ω/km"),f("pf","Power factor","")),"VD = 2 × L × I × (R × pf + X × sinφ) ÷ 1000"),
+        CalcSpec("vdrop3","Power Distribution","Three-Phase Cable Voltage Drop","Balanced three-phase line voltage drop",listOf(f("VD","Voltage drop","V"),f("I","Line current","A"),f("L","Cable length","m"),f("R","Conductor resistance","Ω/km"),f("X","Conductor reactance","Ω/km"),f("pf","Power factor","")),"VD = √3 × L × I × (R × pf + X × sinφ) ÷ 1000"),
+        CalcSpec("vdropPct","Power Distribution","Voltage Drop Percentage","Voltage drop as a percentage of nominal voltage",listOf(f("VDpct","Voltage drop","%"),f("VD","Voltage drop","V"),f("Vn","Nominal voltage","V")),"VD% = (VD ÷ Vn) × 100"),
+        CalcSpec("cableR","Power Distribution","Cable Conductor Resistance","Resistance from resistivity, length and cross-sectional area",listOf(f("R","Resistance","Ω"),f("rho","Resistivity","Ω·m"),f("L","Conductor length","m"),f("A","Cross-sectional area","mm²")),"R = ρ × L ÷ (A × 10⁻⁶)"),
+        CalcSpec("cableLoss","Power Distribution","Cable Power Loss","Three-phase conductor copper loss",listOf(f("Ploss","Power loss","W"),f("I","Line current","A"),f("R","Resistance per phase","Ω")),"Ploss = 3 × I² × R"),
+        CalcSpec("loadCurrent","Power Distribution","Single-Phase Load Current","Current from active power, voltage and power factor",listOf(f("I","Load current","A"),f("P","Active power","W"),f("V","Voltage","V"),f("pf","Power factor","")),"I = P ÷ (V × pf)"),
+        CalcSpec("maxDemand","Power Distribution","Maximum Demand","Maximum demand from connected load and demand factor",listOf(f("MD","Maximum demand","kW"),f("CL","Connected load","kW"),f("DF","Demand factor","")),"MD = CL × DF"),
+        CalcSpec("loadFactor","Power Distribution","Load Factor","Average demand as a fraction of maximum demand",listOf(f("LF","Load factor","%"),f("Avg","Average demand","kW"),f("MD","Maximum demand","kW")),"LF = (Average demand ÷ Maximum demand) × 100"),
+        CalcSpec("diversity","Power Distribution","Diversity Factor","Sum of individual maximum demands divided by group maximum demand",listOf(f("Div","Diversity factor",""),f("SumMD","Sum of individual maximum demands","kW"),f("GroupMD","Group maximum demand","kW")),"Div = SumMD ÷ GroupMD"),
+        CalcSpec("demandFactor","Power Distribution","Demand Factor","Maximum demand as a fraction of connected load",listOf(f("DF","Demand factor","%"),f("MD","Maximum demand","kW"),f("CL","Connected load","kW")),"DF = (MD ÷ CL) × 100"),
+        CalcSpec("distEff","Power Distribution","Distribution Efficiency","Useful output power compared with input power",listOf(f("η","Efficiency","%"),f("Pout","Output power","kW"),f("Pin","Input power","kW")),"η = (Pout ÷ Pin) × 100"),
+        CalcSpec("syncSpeed","Electrical Machines","Synchronous Speed","Rotating magnetic field speed",listOf(f("Ns","Synchronous speed","rpm"),f("f","Frequency","Hz"),f("P","Number of poles","")),"Ns = 120 × f ÷ P"),
+        CalcSpec("slip","Electrical Machines","Motor Slip","Difference between synchronous and rotor speed",listOf(f("s","Slip","%"),f("Ns","Synchronous speed","rpm"),f("Nr","Rotor speed","rpm")),"s = ((Ns − Nr) ÷ Ns) × 100"),
+        CalcSpec("rotorSpeed","Electrical Machines","Rotor Speed","Induction motor rotor speed from slip",listOf(f("Nr","Rotor speed","rpm"),f("Ns","Synchronous speed","rpm"),f("s","Slip","%")),"Nr = Ns × (1 − s ÷ 100)"),
+        CalcSpec("torque","Electrical Machines","Motor Torque","Shaft torque from mechanical output power and speed",listOf(f("T","Torque","N·m"),f("Pout","Output power","kW"),f("N","Speed","rpm")),"T = 9550 × Pout ÷ N"),
+        CalcSpec("motorInput","Electrical Machines","Motor Input Power","Electrical input power from output power and efficiency",listOf(f("Pin","Input power","kW"),f("Pout","Output power","kW"),f("η","Efficiency","%")),"Pin = Pout ÷ (η ÷ 100)"),
+        CalcSpec("motorOutput","Electrical Machines","Motor Output Power","Mechanical output power from input power and efficiency",listOf(f("Pout","Output power","kW"),f("Pin","Input power","kW"),f("η","Efficiency","%")),"Pout = Pin × (η ÷ 100)"),
+        CalcSpec("motorEff","Electrical Machines","Motor Efficiency","Mechanical output compared with electrical input",listOf(f("η","Efficiency","%"),f("Pout","Output power","kW"),f("Pin","Input power","kW")),"η = (Pout ÷ Pin) × 100"),
+        CalcSpec("motorCurrent","Electrical Machines","Three-Phase Motor Current","Line current from output power, voltage, power factor and efficiency",listOf(f("I","Line current","A"),f("Pout","Output power","kW"),f("V","Line voltage","V"),f("pf","Power factor",""),f("η","Efficiency","%")),"I = Pout × 1000 ÷ (√3 × V × pf × η)")
+
     )
 
     fun solve(id:String,u:String,m:Map<String,Double>):CalcAnswer {
@@ -212,6 +232,92 @@ object CalculatorCatalog {
                 "Reg"->{val a=v("Vnl");val b=v("Vfl");pos(b,"Full-load voltage");x=(a-b)/b*100;unit="%";formula="Reg = ((Vnl − Vfl) ÷ Vfl) × 100";sub="Reg = (($a − $b) ÷ $b) × 100";steps=listOf("Subtract full-load voltage from no-load voltage.","Divide by full-load voltage and multiply by 100.")}
                 "Vnl"->{val a=v("Reg");val b=v("Vfl");x=(a/100+1)*b;unit="V";formula="Vnl = Vfl × (1 + Reg ÷ 100)";sub="Vnl = $b × (1 + $a ÷ 100)";steps=listOf("Convert regulation to a decimal, add one and multiply by full-load voltage.")}
                 else->{val a=v("Vnl");val b=v("Reg");pos(1+b/100,"Regulation factor");x=a/(1+b/100);unit="V";formula="Vfl = Vnl ÷ (1 + Reg ÷ 100)";sub="Vfl = $a ÷ (1 + $b ÷ 100)";steps=listOf("Divide no-load voltage by one plus regulation as a decimal.")}
+            }
+
+
+            "vdrop1","vdrop3" -> {
+                val factor=if(id=="vdrop1")2.0 else kotlin.math.sqrt(3.0)
+                val label=if(id=="vdrop1")"Single-phase" else "Three-phase"
+                when(u){
+                    "VD"->{val a=v("I");val b=v("L");val c=v("R");val d=v("X");val e=v("pf");pos(a,"Current");pos(b,"Length");pos(e,"Power factor");require(e<=1.0){"Power factor cannot exceed 1."};val sin=kotlin.math.sqrt(1-e*e);x=factor*b*a*(c*e+d*sin)/1000;unit="V";formula=if(id=="vdrop1")"VD = 2LI(Rpf + Xsinφ) ÷ 1000" else "VD = √3LI(Rpf + Xsinφ) ÷ 1000";sub="VD = $factor × $b × $a × ($c × $e + $d × $sin) ÷ 1000";steps=listOf("Calculate sinφ = √(1 − pf²).","Calculate the resistive and reactive voltage-drop components.","Apply the single-phase or balanced three-phase multiplier and convert Ω/km to Ω/m.")}
+                    "I"->{val a=v("VD");val b=v("L");val c=v("R");val d=v("X");val e=v("pf");pos(b,"Length");pos(e,"Power factor");require(e<=1.0){"Power factor cannot exceed 1."};val term=c*e+d*kotlin.math.sqrt(1-e*e);pos(term,"Impedance factor");x=a*1000/(factor*b*term);unit="A";formula="I = VD × 1000 ÷ (factor × L × (Rpf + Xsinφ))";sub="I = $a × 1000 ÷ ($factor × $b × $term)";steps=listOf("Calculate the voltage-drop impedance factor.","Rearrange the voltage-drop equation for current.")}
+                    "L"->{val a=v("VD");val b=v("I");val c=v("R");val d=v("X");val e=v("pf");pos(b,"Current");pos(e,"Power factor");require(e<=1.0){"Power factor cannot exceed 1."};val term=c*e+d*kotlin.math.sqrt(1-e*e);pos(term,"Impedance factor");x=a*1000/(factor*b*term);unit="m";formula="L = VD × 1000 ÷ (factor × I × (Rpf + Xsinφ))";sub="L = $a × 1000 ÷ ($factor × $b × $term)";steps=listOf("Calculate the voltage-drop impedance factor.","Rearrange the equation for cable length.")}
+                    else->error("For this calculator, select voltage drop, current or cable length as the unknown.")
+                }
+            }
+            "vdropPct" -> when(u){
+                "VDpct"->{val a=v("VD");val b=v("Vn");pos(b,"Nominal voltage");x=a/b*100;unit="%";formula="VD% = (VD ÷ Vn) × 100";sub="VD% = ($a ÷ $b) × 100";steps=listOf("Divide voltage drop by nominal voltage.","Multiply by 100.")}
+                "VD"->{val a=v("VDpct");val b=v("Vn");x=a/100*b;unit="V";formula="VD = (VD% ÷ 100) × Vn";sub="VD = ($a ÷ 100) × $b";steps=listOf("Convert percentage to a decimal and multiply by nominal voltage.")}
+                else->{val a=v("VD");val b=v("VDpct");pos(b,"Voltage-drop percentage");x=a/(b/100);unit="V";formula="Vn = VD ÷ (VD% ÷ 100)";sub="Vn = $a ÷ ($b ÷ 100)";steps=listOf("Divide voltage drop by the percentage expressed as a decimal.")}
+            }
+            "cableR" -> when(u){
+                "R"->{val a=v("rho");val b=v("L");val c=v("A");pos(a,"Resistivity");pos(b,"Length");pos(c,"Area");x=a*b/(c*1e-6);unit="Ω";formula="R = ρ × L ÷ (A × 10⁻⁶)";sub="R = $a × $b ÷ ($c × 10⁻⁶)";steps=listOf("Convert cross-sectional area from mm² to m².","Multiply resistivity by conductor length.","Divide by the converted area.")}
+                "rho"->{val a=v("R");val b=v("A");val c=v("L");pos(c,"Length");x=a*b*1e-6/c;unit="Ω·m";formula="ρ = R × A × 10⁻⁶ ÷ L";sub="ρ = $a × $b × 10⁻⁶ ÷ $c";steps=listOf("Rearrange the conductor resistance equation for resistivity.")}
+                "L"->{val a=v("R");val b=v("A");val c=v("rho");pos(c,"Resistivity");x=a*b*1e-6/c;unit="m";formula="L = R × A × 10⁻⁶ ÷ ρ";sub="L = $a × $b × 10⁻⁶ ÷ $c";steps=listOf("Rearrange the conductor resistance equation for length.")}
+                else->{val a=v("R");val b=v("rho");val c=v("L");pos(a,"Resistance");pos(b,"Resistivity");x=b*c/a*1e6;unit="mm²";formula="A = ρ × L ÷ (R × 10⁶)";sub="A = $b × $c ÷ ($a × 10⁶)";steps=listOf("Rearrange the conductor resistance equation for cross-sectional area.")}
+            }
+            "cableLoss" -> when(u){
+                "Ploss"->{val a=v("I");val b=v("R");x=3*a*a*b;unit="W";formula="Ploss = 3 × I² × R";sub="Ploss = 3 × $a² × $b";steps=listOf("Square line current.","Multiply by resistance per phase and by three phases.")}
+                "I"->{val a=v("Ploss");val b=v("R");pos(b,"Resistance");x=kotlin.math.sqrt(a/(3*b));unit="A";formula="I = √(Ploss ÷ (3R))";sub="I = √($a ÷ (3 × $b))";steps=listOf("Divide total three-phase copper loss by three times phase resistance.","Take the square root.")}
+                else->{val a=v("Ploss");val b=v("I");pos(b,"Current");x=a/(3*b*b);unit="Ω";formula="R = Ploss ÷ (3I²)";sub="R = $a ÷ (3 × $b²)";steps=listOf("Divide total three-phase copper loss by three times current squared.")}
+            }
+            "loadCurrent" -> when(u){
+                "I"->{val a=v("P");val b=v("V");val c=v("pf");pos(b,"Voltage");pos(c,"Power factor");require(c<=1.0){"Power factor cannot exceed 1."};x=a/(b*c);unit="A";formula="I = P ÷ (V × pf)";sub="I = $a ÷ ($b × $c)";steps=listOf("Multiply voltage by power factor.","Divide active power by the result.")}
+                "P"->{val a=v("I");val b=v("V");val c=v("pf");x=a*b*c;unit="W";formula="P = I × V × pf";sub="P = $a × $b × $c";steps=listOf("Multiply current, voltage and power factor.")}
+                "V"->{val a=v("P");val b=v("I");val c=v("pf");pos(b,"Current");pos(c,"Power factor");x=a/(b*c);unit="V";formula="V = P ÷ (I × pf)";sub="V = $a ÷ ($b × $c)";steps=listOf("Divide active power by current times power factor.")}
+                else->{val a=v("P");val b=v("I");val c=v("V");pos(b,"Current");pos(c,"Voltage");x=a/(b*c);unit="";formula="pf = P ÷ (I × V)";sub="pf = $a ÷ ($b × $c)";steps=listOf("Divide active power by apparent power.");require(x in 0.0..1.0){"Power factor must be between 0 and 1."}}
+            }
+            "maxDemand" -> when(u){
+                "MD"->{val a=v("CL");val b=v("DF");x=a*b;unit="kW";formula="MD = CL × DF";sub="MD = $a × $b";steps=listOf("Multiply connected load by demand factor.")}
+                "CL"->{val a=v("MD");val b=v("DF");pos(b,"Demand factor");x=a/b;unit="kW";formula="CL = MD ÷ DF";sub="CL = $a ÷ $b";steps=listOf("Divide maximum demand by demand factor.")}
+                else->{val a=v("MD");val b=v("CL");pos(b,"Connected load");x=a/b;unit="";formula="DF = MD ÷ CL";sub="DF = $a ÷ $b";steps=listOf("Divide maximum demand by connected load.")}
+            }
+            "loadFactor","demandFactor" -> when(u){
+                "LF","DF"->{val a=v(if(id=="loadFactor")"Avg" else "MD");val b=v(if(id=="loadFactor")"MD" else "CL");pos(b,"Denominator");x=a/b*100;unit="%";formula=if(id=="loadFactor")"LF = (Avg ÷ MD) × 100" else "DF = (MD ÷ CL) × 100";sub="Result = ($a ÷ $b) × 100";steps=listOf("Divide the numerator by the denominator.","Multiply by 100 to express as a percentage.")}
+                "Avg","MD"->{val a=v(if(id=="loadFactor")"LF" else "DF");val b=v(if(id=="loadFactor")"MD" else "CL");x=a/100*b;unit="kW";formula="Numerator = (Factor ÷ 100) × Denominator";sub="Result = ($a ÷ 100) × $b";steps=listOf("Convert the factor percentage to a decimal.","Multiply by the denominator.")}
+                else->{val a=v(if(id=="loadFactor")"Avg" else "MD");val b=v(if(id=="loadFactor")"LF" else "DF");pos(b,"Factor");x=a/(b/100);unit="kW";formula="Denominator = Numerator ÷ (Factor ÷ 100)";sub="Result = $a ÷ ($b ÷ 100)";steps=listOf("Divide the numerator by the factor as a decimal.")}
+            }
+            "diversity" -> when(u){
+                "Div"->{val a=v("SumMD");val b=v("GroupMD");pos(b,"Group maximum demand");x=a/b;unit="";formula="Div = SumMD ÷ GroupMD";sub="Div = $a ÷ $b";steps=listOf("Divide the sum of individual maximum demands by group maximum demand.")}
+                "SumMD"->{val a=v("Div");val b=v("GroupMD");x=a*b;unit="kW";formula="SumMD = Div × GroupMD";sub="SumMD = $a × $b";steps=listOf("Multiply diversity factor by group maximum demand.")}
+                else->{val a=v("SumMD");val b=v("Div");pos(b,"Diversity factor");x=a/b;unit="kW";formula="GroupMD = SumMD ÷ Div";sub="GroupMD = $a ÷ $b";steps=listOf("Divide sum of individual maximum demands by diversity factor.")}
+            }
+            "distEff","motorEff" -> when(u){
+                "η"->{val a=v("Pout");val b=v("Pin");pos(b,"Input power");x=a/b*100;unit="%";formula="η = (Pout ÷ Pin) × 100";sub="η = ($a ÷ $b) × 100";steps=listOf("Divide output power by input power.","Multiply by 100.")}
+                "Pout"->{val a=v("η");val b=v("Pin");x=a/100*b;unit="kW";formula="Pout = (η ÷ 100) × Pin";sub="Pout = ($a ÷ 100) × $b";steps=listOf("Convert efficiency to a decimal and multiply by input power.")}
+                else->{val a=v("Pout");val b=v("η");pos(b,"Efficiency");x=a/(b/100);unit="kW";formula="Pin = Pout ÷ (η ÷ 100)";sub="Pin = $a ÷ ($b ÷ 100)";steps=listOf("Divide output power by efficiency as a decimal.")}
+            }
+            "syncSpeed" -> when(u){
+                "Ns"->{val a=v("f");val b=v("P");pos(b,"Pole count");require(b%2.0==0.0){"Pole count must be an even whole number."};x=120*a/b;unit="rpm";formula="Ns = 120 × f ÷ P";sub="Ns = 120 × $a ÷ $b";steps=listOf("Multiply frequency by 120.","Divide by the number of poles.")}
+                "f"->{val a=v("Ns");val b=v("P");pos(b,"Pole count");x=a*b/120;unit="Hz";formula="f = Ns × P ÷ 120";sub="f = $a × $b ÷ 120";steps=listOf("Multiply synchronous speed by pole count and divide by 120.")}
+                else->{val a=v("Ns");val b=v("f");pos(b,"Frequency");x=120*b/a;unit="poles";formula="P = 120 × f ÷ Ns";sub="P = 120 × $b ÷ $a";steps=listOf("Calculate pole count from synchronous speed and frequency.")}
+            }
+            "slip" -> when(u){
+                "s"->{val a=v("Ns");val b=v("Nr");pos(a,"Synchronous speed");x=(a-b)/a*100;unit="%";formula="s = ((Ns − Nr) ÷ Ns) × 100";sub="s = (($a − $b) ÷ $a) × 100";steps=listOf("Subtract rotor speed from synchronous speed.","Divide by synchronous speed and multiply by 100.")}
+                "Ns"->{val a=v("s");val b=v("Nr");require(a<100.0){"Slip must be less than 100%."};x=b/(1-a/100);unit="rpm";formula="Ns = Nr ÷ (1 − s ÷ 100)";sub="Ns = $b ÷ (1 − $a ÷ 100)";steps=listOf("Convert slip to a decimal and rearrange the slip equation.")}
+                else->{val a=v("Ns");val b=v("s");x=a*(1-b/100);unit="rpm";formula="Nr = Ns × (1 − s ÷ 100)";sub="Nr = $a × (1 − $b ÷ 100)";steps=listOf("Convert slip to a decimal and multiply synchronous speed by one minus slip.")}
+            }
+            "rotorSpeed" -> when(u){
+                "Nr"->{val a=v("Ns");val b=v("s");pos(a,"Synchronous speed");require(b<100.0){"Slip must be less than 100%."};x=a*(1-b/100);unit="rpm";formula="Nr = Ns × (1 − s ÷ 100)";sub="Nr = $a × (1 − $b ÷ 100)";steps=listOf("Convert slip to a decimal.","Multiply synchronous speed by one minus slip.")}
+                "Ns"->{val a=v("Nr");val b=v("s");require(b<100.0){"Slip must be less than 100%."};x=a/(1-b/100);unit="rpm";formula="Ns = Nr ÷ (1 − s ÷ 100)";sub="Ns = $a ÷ (1 − $b ÷ 100)";steps=listOf("Rearrange the rotor-speed equation for synchronous speed.")}
+                else->{val a=v("Ns");val b=v("Nr");pos(a,"Synchronous speed");x=(a-b)/a*100;unit="%";formula="s = ((Ns − Nr) ÷ Ns) × 100";sub="s = (($a − $b) ÷ $a) × 100";steps=listOf("Calculate the speed difference as a percentage of synchronous speed.")}
+            }
+            "torque" -> when(u){
+                "T"->{val a=v("Pout");val b=v("N");pos(b,"Speed");x=9550*a/b;unit="N·m";formula="T = 9550 × Pout ÷ N";sub="T = 9550 × $a ÷ $b";steps=listOf("Multiply mechanical output power in kW by 9550.","Divide by shaft speed in rpm.")}
+                "Pout"->{val a=v("T");val b=v("N");x=a*b/9550;unit="kW";formula="Pout = T × N ÷ 9550";sub="Pout = $a × $b ÷ 9550";steps=listOf("Multiply torque by speed and divide by 9550.")}
+                else->{val a=v("Pout");val b=v("T");pos(b,"Torque");x=9550*a/b;unit="rpm";formula="N = 9550 × Pout ÷ T";sub="N = 9550 × $a ÷ $b";steps=listOf("Rearrange the torque equation for speed.")}
+            }
+            "motorInput","motorOutput" -> when(u){
+                "Pin"->{val a=v("Pout");val b=v("η");pos(b,"Efficiency");require(b<=100.0){"Efficiency cannot exceed 100%."};x=a/(b/100);unit="kW";formula="Pin = Pout ÷ (η ÷ 100)";sub="Pin = $a ÷ ($b ÷ 100)";steps=listOf("Convert efficiency to a decimal.","Divide output power by efficiency.")}
+                "Pout"->{val a=v("Pin");val b=v("η");require(b in 0.0..100.0){"Efficiency must be between 0 and 100%."};x=a*b/100;unit="kW";formula="Pout = Pin × (η ÷ 100)";sub="Pout = $a × ($b ÷ 100)";steps=listOf("Convert efficiency to a decimal and multiply by input power.")}
+                else->{val a=v("Pout");val b=v("Pin");pos(b,"Input power");x=a/b*100;unit="%";formula="η = (Pout ÷ Pin) × 100";sub="η = ($a ÷ $b) × 100";steps=listOf("Divide output power by input power and multiply by 100.")}
+            }
+            "motorCurrent" -> when(u){
+                "I"->{val a=v("Pout");val b=v("V");val c=v("pf");val d=v("η");pos(b,"Line voltage");pos(c,"Power factor");pos(d,"Efficiency");require(c<=1.0 && d<=100.0){"Power factor and efficiency must not exceed 1 and 100% respectively."};x=a*1000/(kotlin.math.sqrt(3.0)*b*c*(d/100));unit="A";formula="I = Pout × 1000 ÷ (√3 × V × pf × η)";sub="I = $a × 1000 ÷ (√3 × $b × $c × ($d ÷ 100))";steps=listOf("Convert output power from kW to W.","Convert efficiency percentage to a decimal.","Divide by √3, line voltage, power factor and efficiency.")}
+                "Pout"->{val a=v("I");val b=v("V");val c=v("pf");val d=v("η");x=kotlin.math.sqrt(3.0)*a*b*c*(d/100)/1000;unit="kW";formula="Pout = √3 × V × I × pf × η ÷ 1000";sub="Pout = √3 × $b × $a × $c × ($d ÷ 100) ÷ 1000";steps=listOf("Calculate electrical input power from three-phase line values.","Multiply by efficiency to obtain mechanical output power.")}
+                "V"->{val a=v("Pout");val b=v("I");val c=v("pf");val d=v("η");pos(b,"Current");pos(c,"Power factor");pos(d,"Efficiency");x=a*1000/(kotlin.math.sqrt(3.0)*b*c*(d/100));unit="V";formula="V = Pout × 1000 ÷ (√3 × I × pf × η)";sub="V = $a × 1000 ÷ (√3 × $b × $c × ($d ÷ 100))";steps=listOf("Rearrange the three-phase motor input-current equation for voltage.")}
+                "pf"->{val a=v("Pout");val b=v("I");val c=v("V");val d=v("η");pos(b,"Current");pos(c,"Voltage");pos(d,"Efficiency");x=a*1000/(kotlin.math.sqrt(3.0)*b*c*(d/100));unit="";formula="pf = Pout × 1000 ÷ (√3 × V × I × η)";sub="pf = $a × 1000 ÷ (√3 × $c × $b × ($d ÷ 100))";steps=listOf("Rearrange the motor current equation for power factor.");require(x<=1.0){"Calculated power factor exceeds 1."}}
+                else->{val a=v("Pout");val b=v("I");val c=v("V");val d=v("pf");pos(b,"Current");pos(c,"Voltage");pos(d,"Power factor");x=a*100000/(kotlin.math.sqrt(3.0)*b*c*d);unit="%";formula="η = Pout × 100000 ÷ (√3 × V × I × pf)";sub="η = $a × 100000 ÷ (√3 × $c × $b × $d)";steps=listOf("Rearrange the three-phase motor current equation for efficiency.");require(x<=100.0){"Calculated efficiency exceeds 100%."}}
             }
 
             else -> error("Calculator not available.")

@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CalculatorEngineTest {
-    @Test fun phaseOneCatalogHasSixteenCalculators() { assertEquals(33, CalculatorCatalog.all.size) }
+    @Test fun phaseOneCatalogHasSixteenCalculators() { assertEquals(51, CalculatorCatalog.all.size) }
     @Test fun solvesOhmsLawVoltage() {
         val r=CalculatorCatalog.solve("ohms","V",mapOf("I" to 2.0,"R" to 10.0))
         assertEquals(20.0,r.value,1e-9)
@@ -51,5 +51,40 @@ class CalculatorEngineTest {
     @Test fun solvesTransformerEfficiency() {
         val r=CalculatorCatalog.solve("efficiency","η",mapOf("Pout" to 9500.0,"Pin" to 10000.0))
         assertEquals(95.0,r.value,1e-9)
+    }
+}
+
+
+class PhaseThreeCalculatorTest {
+    @org.junit.Test fun phaseThreeAddsEighteenCalculators() {
+        org.junit.Assert.assertEquals(18, CalculatorCatalog.all.size - 33)
+    }
+    @org.junit.Test fun calculatesThreePhaseVoltageDrop() {
+        val r=CalculatorCatalog.solve("vdrop3","VD",mapOf("I" to 100.0,"L" to 100.0,"R" to 0.2,"X" to 0.08,"pf" to 0.8))
+        org.junit.Assert.assertEquals(3.603,r.value,0.01)
+    }
+    @org.junit.Test fun calculatesCableResistance() {
+        val r=CalculatorCatalog.solve("cableR","R",mapOf("rho" to 1.72e-8,"L" to 100.0,"A" to 50.0))
+        org.junit.Assert.assertEquals(0.0344,r.value,0.0001)
+    }
+    @org.junit.Test fun calculatesCableAreaFromResistance() {
+        val r=CalculatorCatalog.solve("cableR","A",mapOf("R" to 0.0344,"rho" to 1.72e-8,"L" to 100.0))
+        org.junit.Assert.assertEquals(50.0,r.value,0.01)
+    }
+    @org.junit.Test fun calculatesSynchronousSpeed() {
+        val r=CalculatorCatalog.solve("syncSpeed","Ns",mapOf("f" to 50.0,"P" to 4.0))
+        org.junit.Assert.assertEquals(1500.0,r.value,1e-9)
+    }
+    @org.junit.Test fun calculatesMotorSlip() {
+        val r=CalculatorCatalog.solve("slip","s",mapOf("Ns" to 1500.0,"Nr" to 1440.0))
+        org.junit.Assert.assertEquals(4.0,r.value,1e-9)
+    }
+    @org.junit.Test fun calculatesMotorTorque() {
+        val r=CalculatorCatalog.solve("torque","T",mapOf("Pout" to 15.0,"N" to 1470.0))
+        org.junit.Assert.assertEquals(97.449,r.value,0.01)
+    }
+    @org.junit.Test fun calculatesThreePhaseMotorCurrent() {
+        val r=CalculatorCatalog.solve("motorCurrent","I",mapOf("Pout" to 15.0,"V" to 400.0,"pf" to 0.85,"η" to 90.0))
+        org.junit.Assert.assertEquals(28.31,r.value,0.1)
     }
 }
