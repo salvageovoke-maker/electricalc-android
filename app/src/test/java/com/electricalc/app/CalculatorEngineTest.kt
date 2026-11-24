@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CalculatorEngineTest {
-    @Test fun phaseOneCatalogHasSixteenCalculators() { assertEquals(51, CalculatorCatalog.all.size) }
+    @Test fun phaseOneCatalogHasSixteenCalculators() { assertEquals(16, CalculatorCatalog.all.count { it.category == "Basic Electrical" || it.category == "AC Circuits" }) }
     @Test fun solvesOhmsLawVoltage() {
         val r=CalculatorCatalog.solve("ohms","V",mapOf("I" to 2.0,"R" to 10.0))
         assertEquals(20.0,r.value,1e-9)
@@ -26,7 +26,7 @@ class CalculatorEngineTest {
         CalculatorCatalog.solve("ohms","I",mapOf("V" to 12.0,"R" to 0.0))
     }
     @Test fun phaseTwoCatalogHasFifteenCalculators() {
-        assertEquals(17, CalculatorCatalog.all.size - 16)
+        assertEquals(17, CalculatorCatalog.all.count { it.category == "Three-Phase Systems" || it.category == "Transformers" })
     }
     @Test fun solvesBalancedThreePhasePower() {
         val r=CalculatorCatalog.solve("threepower","P",mapOf("V" to 400.0,"I" to 10.0,"pf" to 0.8))
@@ -56,8 +56,9 @@ class CalculatorEngineTest {
 
 
 class PhaseThreeCalculatorTest {
+    @org.junit.Test fun completeCatalogHasFiftyTwoCalculators() { org.junit.Assert.assertEquals(52, CalculatorCatalog.all.size) }
     @org.junit.Test fun phaseThreeAddsEighteenCalculators() {
-        org.junit.Assert.assertEquals(18, CalculatorCatalog.all.size - 33)
+        org.junit.Assert.assertEquals(19, CalculatorCatalog.all.count { it.category == "Power Distribution" || it.category == "Electrical Machines" })
     }
     @org.junit.Test fun calculatesThreePhaseVoltageDrop() {
         val r=CalculatorCatalog.solve("vdrop3","VD",mapOf("I" to 100.0,"L" to 100.0,"R" to 0.2,"X" to 0.08,"pf" to 0.8))

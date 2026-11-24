@@ -22,9 +22,9 @@ Three-phase power equations assume a balanced system and use line quantities. Tr
 
 
 ## Phase 3
-Adds 18 calculators across Power Distribution and Electrical Machines.
+Adds 19 calculators across Power Distribution and Electrical Machines. The complete catalog contains 52 calculators.
 
-Power Distribution includes single-phase and balanced three-phase cable voltage drop, voltage-drop percentage, conductor resistance, three-phase copper loss, single-phase load current, maximum demand, load factor, diversity factor, demand factor and distribution efficiency.
+Power Distribution includes single-phase and balanced three-phase cable voltage drop, voltage-drop percentage, conductor resistance, three-phase copper loss, single-phase load current, maximum demand, load factor, diversity factor, demand factor, distribution efficiency and the additional distribution calculations included in the catalog.
 
 Electrical Machines includes synchronous speed, induction motor slip, rotor speed, shaft torque, motor input power, motor output power, motor efficiency and three-phase motor current.
 
