@@ -51,3 +51,32 @@ All 10 conversion tools use a source unit, one input value, and a target unit. T
 - Added distinct icons for all eight calculator categories.
 - Added a functional navigation drawer with Home, Favorites, History, Library, category shortcuts, and About ElectriCalc.
 - Preserved the existing bottom navigation and calculator screens.
+
+
+## Version 1.7.0 settings
+
+- Added a functional Settings screen from the home gear and navigation drawer.
+- Added persistent System default, Light, and Dark appearance preferences.
+- Added persistent result precision choices: 2, 4, or 6 decimal places.
+- Added a persistent haptic feedback toggle, applied to navigation and home controls.
+- Added a reset preferences action.
+- Settings are stored locally using Android SharedPreferences.
+
+
+## Version 1.8.0 calculation history
+
+- Added automatic history entries after successful standard calculator calculations and unit conversions.
+- Stores calculator name, category, entered values or conversion details, result, and date/time.
+- Persists the latest 200 calculations locally on the device.
+- Added history count, open-calculator shortcut, individual delete, and clear-all confirmation.
+- History is stored separately from appearance and interaction preferences.
+
+
+## Version 1.9.0 reference library
+
+- Removed the "Phase 1 formulas" heading.
+- Grouped reference formulas under the same eight categories used on the calculator home screen.
+- Added collapsible accordion sections with category icons and formula counts.
+- Only one category remains expanded at a time.
+- Formula names and expressions are displayed when a category is expanded.
+- Formula definitions and calculator registrations remain unchanged.

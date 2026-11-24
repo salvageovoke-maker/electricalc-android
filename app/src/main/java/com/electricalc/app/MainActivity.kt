@@ -21,6 +21,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,16 +32,91 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
+import org.json.JSONArray
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
 import kotlinx.coroutines.launch
 
 private val Graphite=Color(0xFF252B3A)
 private val CardGraphite=Color(0xFF343C4D)
 private val Amber=Color(0xFFFFB02E)
 private val Muted=Color(0xFFB8C0CC)
-private val AppScheme=darkColorScheme(primary=Amber,onPrimary=Graphite,secondary=Color(0xFFFFC766),background=Graphite,surface=CardGraphite,onBackground=Color.White,onSurface=Color.White)
+private data class HistoryEntry(
+    val id:String,val calculatorId:String,val name:String,val category:String,
+    val details:String,val result:String,val timestamp:Long
+)
+
+private fun loadHistory(prefs:android.content.SharedPreferences):List<HistoryEntry>{
+    return try{
+        val array=JSONArray(prefs.getString("calculation_history","[]") ?: "[]")
+        (0 until array.length()).mapNotNull{index->
+            val item=array.optJSONObject(index) ?: return@mapNotNull null
+            HistoryEntry(
+                item.optString("id"),item.optString("calculatorId"),item.optString("name"),
+                item.optString("category"),item.optString("details"),item.optString("result"),
+                item.optLong("timestamp")
+            )
+        }.sortedByDescending{it.timestamp}
+    }catch(_:Exception){ emptyList() }
+}
+
+private fun saveHistory(prefs:android.content.SharedPreferences,entries:List<HistoryEntry>){
+    val array=JSONArray()
+    entries.forEach{entry->
+        array.put(JSONObject().put("id",entry.id).put("calculatorId",entry.calculatorId)
+            .put("name",entry.name).put("category",entry.category).put("details",entry.details)
+            .put("result",entry.result).put("timestamp",entry.timestamp))
+    }
+    prefs.edit().putString("calculation_history",array.toString()).apply()
+}
+
+private val LocalPrecision = compositionLocalOf { 4 }
+private val LocalHaptics = compositionLocalOf { true }
 
 class MainActivity:ComponentActivity(){
-    override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);setContent{MaterialTheme(colorScheme=AppScheme){ElectriCalcApp()}}}
+    override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);setContent{ElectriCalcRoot()}}
+}
+
+@Composable
+private fun ElectriCalcRoot(){
+    val context= LocalContext.current
+    val prefs= remember { context.getSharedPreferences("electricalc_preferences", android.content.Context.MODE_PRIVATE) }
+    var themeMode by remember { mutableStateOf(prefs.getString("theme_mode","System default") ?: "System default") }
+    var precision by remember { mutableIntStateOf(prefs.getInt("decimal_precision",4)) }
+    var haptics by remember { mutableStateOf(prefs.getBoolean("haptic_feedback",true)) }
+    val history= remember { mutableStateListOf<HistoryEntry>().apply { addAll(loadHistory(prefs)) } }
+    val systemDark=isSystemInDarkTheme()
+    val darkMode=themeMode=="Dark" || (themeMode=="System default" && systemDark)
+    val scheme=if(darkMode) darkColorScheme(
+        primary=Amber,onPrimary=Graphite,secondary=Color(0xFFFFC766),
+        background=Graphite,surface=CardGraphite,onBackground=Color.White,onSurface=Color.White
+    ) else lightColorScheme(
+        primary=Color(0xFF9A5B00),onPrimary=Color.White,secondary=Color(0xFF765000),
+        background=Color(0xFFF4F5F7),surface=Color.White,onBackground=Color(0xFF202633),onSurface=Color(0xFF202633)
+    )
+    CompositionLocalProvider(LocalPrecision provides precision,LocalHaptics provides haptics){
+        MaterialTheme(colorScheme=scheme){
+            ElectriCalcApp(
+                themeMode=themeMode,precision=precision,haptics=haptics,history=history,
+                onHistoryAdd={entry->
+                    history.removeAll{it.id==entry.id}
+                    history.add(0,entry)
+                    while(history.size>200) history.removeAt(history.lastIndex)
+                    saveHistory(prefs,history)
+                },
+                onHistoryDelete={id->history.removeAll{it.id==id};saveHistory(prefs,history)},
+                onHistoryClear={history.clear();saveHistory(prefs,history)},
+                onThemeChange={themeMode=it;prefs.edit().putString("theme_mode",it).apply()},
+                onPrecisionChange={precision=it;prefs.edit().putInt("decimal_precision",it).apply()},
+                onHapticsChange={haptics=it;prefs.edit().putBoolean("haptic_feedback",it).apply()},
+                onResetPreferences={
+                    themeMode="System default";precision=4;haptics=true
+                    prefs.edit().putString("theme_mode",themeMode).putInt("decimal_precision",precision).putBoolean("haptic_feedback",haptics).apply()
+                }
+            )
+        }
+    }
 }
 private data class Category(val name:String,val detail:String)
 private val categories=listOf(
@@ -65,7 +144,12 @@ private fun categoryIcon(name:String):ImageVector = when(name){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ElectriCalcApp(){
+private fun ElectriCalcApp(
+    themeMode:String,precision:Int,haptics:Boolean,history:List<HistoryEntry>,
+    onHistoryAdd:(HistoryEntry)->Unit,onHistoryDelete:(String)->Unit,onHistoryClear:()->Unit,
+    onThemeChange:(String)->Unit,onPrecisionChange:(Int)->Unit,onHapticsChange:(Boolean)->Unit,onResetPreferences:()->Unit
+){
+    var settingsOpen by remember{mutableStateOf(false)}
     var query by remember{mutableStateOf("")}
     var tab by remember{mutableIntStateOf(0)}
     var category by remember{mutableStateOf<String?>(null)}
@@ -76,21 +160,24 @@ private fun ElectriCalcApp(){
     val favorites=remember{mutableStateListOf<String>()}
     val drawerState= rememberDrawerState(DrawerValue.Closed)
     val scope= rememberCoroutineScope()
+    val haptic=LocalHapticFeedback.current
+    val hapticsEnabled=LocalHaptics.current
 
     ModalNavigationDrawer(
         drawerState=drawerState,
         gesturesEnabled=calc==null,
         drawerContent={
-            ModalDrawerSheet(drawerContainerColor=CardGraphite) {
+            ModalDrawerSheet(drawerContainerColor=MaterialTheme.colorScheme.surface) {
+                Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
                 Row(Modifier.fillMaxWidth().padding(horizontal=20.dp,vertical=24.dp),verticalAlignment=Alignment.CenterVertically){
                     Image(painterResource(R.drawable.electricalc_brand),contentDescription="ElectriCalc logo",modifier=Modifier.size(54.dp))
                     Column(Modifier.padding(start=14.dp)){
                         Text("ElectriCalc",fontSize=21.sp,fontWeight=FontWeight.Bold)
-                        Text("Electrical Calculator",color=Muted,fontSize=12.sp)
+                        Text("Electrical Calculator",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp)
                     }
                 }
-                HorizontalDivider(color=Muted.copy(alpha=.2f))
-                Text("MAIN MENU",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(start=20.dp,top=18.dp,bottom=8.dp))
+                HorizontalDivider(color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f).copy(alpha=.2f))
+                Text("MAIN MENU",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(start=20.dp,top=18.dp,bottom=8.dp))
                 val drawerItems=listOf(
                     Triple("Home",Icons.Default.Home,0),
                     Triple("Favorites",Icons.Default.Favorite,1),
@@ -103,60 +190,95 @@ private fun ElectriCalcApp(){
                         label={Text(item.first)},
                         selected=tab==item.third && category==null && calc==null,
                         onClick={
+                            if(hapticsEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             tab=item.third;category=null;calc=null;answer=null;error=null
                             scope.launch{drawerState.close()}
                         },
                         modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                        colors=NavigationDrawerItemDefaults.colors(selectedContainerColor=Graphite,selectedIconColor=Amber,selectedTextColor=Amber,unselectedIconColor=Muted,unselectedTextColor=Color.White)
+                        colors=NavigationDrawerItemDefaults.colors(selectedContainerColor=MaterialTheme.colorScheme.background,selectedIconColor=Amber,selectedTextColor=Amber,unselectedIconColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),unselectedTextColor=MaterialTheme.colorScheme.onSurface)
                     )
                 }
-                HorizontalDivider(Modifier.padding(vertical=12.dp),color=Muted.copy(alpha=.2f))
-                Text("CALCULATION CATEGORIES",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(start=20.dp,bottom=8.dp))
+                NavigationDrawerItem(
+                    icon={Icon(Icons.Default.Settings,null)},
+                    label={Text("Settings")},
+                    selected=settingsOpen,
+                    onClick={settingsOpen=true;scope.launch{drawerState.close()}},
+                    modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+                    colors=NavigationDrawerItemDefaults.colors(selectedContainerColor=MaterialTheme.colorScheme.background,selectedIconColor=Amber,selectedTextColor=Amber,unselectedIconColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),unselectedTextColor=MaterialTheme.colorScheme.onSurface)
+                )
+                HorizontalDivider(Modifier.padding(vertical=12.dp),color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f).copy(alpha=.2f))
+                Text("CALCULATION CATEGORIES",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(start=20.dp,bottom=8.dp))
                 categories.forEach{item->
                     NavigationDrawerItem(
                         icon={Icon(categoryIcon(item.name),null)},
                         label={Text(item.name)},
                         selected=category==item.name,
                         onClick={
+                            if(hapticsEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             tab=0;category=item.name;calc=null;answer=null;error=null
                             scope.launch{drawerState.close()}
                         },
                         modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                        colors=NavigationDrawerItemDefaults.colors(selectedContainerColor=Graphite,selectedIconColor=Amber,selectedTextColor=Amber,unselectedIconColor=Muted,unselectedTextColor=Color.White)
+                        colors=NavigationDrawerItemDefaults.colors(selectedContainerColor=MaterialTheme.colorScheme.background,selectedIconColor=Amber,selectedTextColor=Amber,unselectedIconColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),unselectedTextColor=MaterialTheme.colorScheme.onSurface)
                     )
                 }
-                Spacer(Modifier.weight(1f))
-                HorizontalDivider(color=Muted.copy(alpha=.2f))
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f).copy(alpha=.2f))
                 NavigationDrawerItem(
                     icon={Icon(Icons.Default.Info,null)},
                     label={Text("About ElectriCalc")},
                     selected=false,
                     onClick={showAbout=true;scope.launch{drawerState.close()}},
                     modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                    colors=NavigationDrawerItemDefaults.colors(unselectedIconColor=Muted,unselectedTextColor=Color.White)
+                    colors=NavigationDrawerItemDefaults.colors(unselectedIconColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),unselectedTextColor=MaterialTheme.colorScheme.onSurface)
                 )
-                Text("Version 1.6.0",color=Muted,fontSize=11.sp,modifier=Modifier.padding(start=22.dp,bottom=18.dp,top=4.dp))
+                Text("Version 1.7.0",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=11.sp,modifier=Modifier.padding(start=22.dp,bottom=18.dp,top=4.dp))
+                }
             }
         }
     ){
-        Scaffold(containerColor=Graphite,bottomBar={
-            NavigationBar(containerColor=CardGraphite){
+        Scaffold(containerColor=MaterialTheme.colorScheme.background,bottomBar={
+            NavigationBar(containerColor=MaterialTheme.colorScheme.surface){
                 listOf("Home" to Icons.Default.Home,"Favorites" to Icons.Default.Favorite,"History" to Icons.Default.History,"Library" to Icons.Default.MenuBook).forEachIndexed{index,item->
-                    NavigationBarItem(selected=tab==index,onClick={tab=index;category=null;calc=null;answer=null;error=null},icon={Icon(item.second,null)},label={Text(item.first)},colors=NavigationBarItemDefaults.colors(selectedIconColor=Amber,selectedTextColor=Amber,indicatorColor=Graphite,unselectedIconColor=Muted,unselectedTextColor=Muted))
+                    NavigationBarItem(selected=tab==index,onClick={if(hapticsEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove);settingsOpen=false;tab=index;category=null;calc=null;answer=null;error=null},icon={Icon(item.second,null)},label={Text(item.first)},colors=NavigationBarItemDefaults.colors(selectedIconColor=Amber,selectedTextColor=Amber,indicatorColor=MaterialTheme.colorScheme.background,unselectedIconColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),unselectedTextColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f)))
                 }
             }
         }){padding->
             when{
+                settingsOpen->SettingsScreen(
+                    themeMode=themeMode,precision=precision,haptics=haptics,
+                    onThemeChange=onThemeChange,onPrecisionChange=onPrecisionChange,
+                    onHapticsChange=onHapticsChange,onReset=onResetPreferences,
+                    onBack={settingsOpen=false},modifier=Modifier.padding(padding)
+                )
                 calc!=null->CalculatorScreen(calc!!,answer,error,favorites.contains(calc!!.id),Modifier.padding(padding),
+                    onHistoryAdd=onHistoryAdd,
                     onBack={calc=null;answer=null;error=null},
                     onFavorite={if(favorites.contains(calc!!.id))favorites.remove(calc!!.id)else favorites.add(calc!!.id)},
-                    onCalculate={u,values->try{answer=CalculatorCatalog.solve(calc!!.id,u,values);error=null}catch(e:Exception){answer=null;error=e.message?: "Check your inputs."}},
+                    onCalculate={u,values->
+                        try{
+                            val solved=CalculatorCatalog.solve(calc!!.id,u,values)
+                            answer=solved;error=null
+                            val details=values.entries.joinToString(" • "){"${it.key} = ${it.value}"}+" • Calculate ${u}"
+                            val stamp=System.currentTimeMillis()
+                            onHistoryAdd(HistoryEntry(
+                                id="${calc!!.id}-$stamp",calculatorId=calc!!.id,name=calc!!.name,
+                                category=calc!!.category,details=details,
+                                result="${String.format(Locale.US,"% .${precision}f",solved.value).trim()} ${solved.unit}".trim(),
+                                timestamp=stamp
+                            ))
+                        }catch(e:Exception){answer=null;error=e.message?: "Check your inputs."}
+                    },
                     onReset={answer=null;error=null})
                 category!=null->CategoryScreen(category!!,Modifier.padding(padding),{category=null},{calc=it})
                 tab==1->SavedScreen("Favorites",CalculatorCatalog.all.filter{favorites.contains(it.id)},Modifier.padding(padding)){calc=it}
-                tab==2->SavedScreen("History",emptyList(),Modifier.padding(padding)){calc=it}
+                tab==2->HistoryScreen(
+                    history=history,modifier=Modifier.padding(padding),
+                    onOpen={entry->CalculatorCatalog.all.firstOrNull{it.id==entry.calculatorId}?.let{calc=it}},
+                    onDelete=onHistoryDelete,onClear=onHistoryClear
+                )
                 tab==3->LibraryScreen(Modifier.padding(padding))
-                else->HomeScreen(query,{query=it},Modifier.padding(padding),onCategory={category=it},onMenu={scope.launch{drawerState.open()}})
+                else->HomeScreen(query,{query=it},Modifier.padding(padding),onCategory={category=it},onMenu={scope.launch{drawerState.open()}},onSettings={settingsOpen=true})
             }
         }
     }
@@ -166,40 +288,115 @@ private fun ElectriCalcApp(){
             confirmButton={TextButton(onClick={showAbout=false}){Text("Close",color=Amber)}},
             title={Text("About ElectriCalc")},
             text={Text("ElectriCalc is an offline-first electrical engineering calculator. Calculations run on your device and do not require an account or an internet connection.")},
-            containerColor=CardGraphite,
-            titleContentColor=Color.White,
-            textContentColor=Muted
+            containerColor=MaterialTheme.colorScheme.surface,
+            titleContentColor=MaterialTheme.colorScheme.onSurface,
+            textContentColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f)
         )
     }
 }
 
 @Composable
-private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onCategory:(String)->Unit,onMenu:()->Unit){
+private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onCategory:(String)->Unit,onMenu:()->Unit,onSettings:()->Unit){
     val shown=categories.filter{it.name.contains(query,true)||it.detail.contains(query,true)}
+    val haptic=LocalHapticFeedback.current
+    val hapticsEnabled=LocalHaptics.current
     Column(modifier.fillMaxSize().padding(horizontal=18.dp,vertical=16.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){
-            IconButton(onClick=onMenu,modifier=Modifier.size(42.dp)){Icon(Icons.Default.Menu,null,tint=Amber,modifier=Modifier.size(28.dp))}
+            IconButton(onClick={if(hapticsEnabled)haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove);onMenu()},modifier=Modifier.size(42.dp)){Icon(Icons.Default.Menu,null,tint=Amber,modifier=Modifier.size(28.dp))}
             Image(painterResource(R.drawable.electricalc_brand),contentDescription="ElectriCalc logo",modifier=Modifier.size(48.dp))
-            Column(Modifier.padding(start=10.dp)){Text("ElectriCalc",fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Electrical Calculator",color=Muted,fontSize=12.sp)}
+            Column(Modifier.padding(start=10.dp)){Text("ElectriCalc",fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Electrical Calculator",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp)}
             Spacer(Modifier.weight(1f))
-            Icon(Icons.Default.Settings,null,tint=Amber,modifier=Modifier.size(25.dp))
+            IconButton(onClick={if(hapticsEnabled)haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove);onSettings()}){Icon(Icons.Default.Settings,null,tint=Amber,modifier=Modifier.size(25.dp))}
         }
         Spacer(Modifier.height(24.dp));Text("What do you want to calculate?",fontSize=19.sp,fontWeight=FontWeight.SemiBold)
         Spacer(Modifier.height(10.dp))
-        OutlinedTextField(query,onQuery,Modifier.fillMaxWidth(),singleLine=true,placeholder={Text("Search calculators...",color=Muted)},leadingIcon={Icon(Icons.Default.Search,null,tint=Muted)},shape=RoundedCornerShape(14.dp))
+        OutlinedTextField(query,onQuery,Modifier.fillMaxWidth(),singleLine=true,placeholder={Text("Search calculators...",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f))},leadingIcon={Icon(Icons.Default.Search,null,tint=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f))},shape=RoundedCornerShape(14.dp))
         Spacer(Modifier.height(22.dp));Text("Calculation categories",fontSize=17.sp,fontWeight=FontWeight.SemiBold);Spacer(Modifier.height(10.dp))
         LazyVerticalGrid(columns=GridCells.Fixed(2),modifier=Modifier.weight(1f),contentPadding=PaddingValues(bottom=12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
             items(shown){item->
-                Card(Modifier.fillMaxWidth().height(140.dp).clickable{onCategory(item.name)},shape=RoundedCornerShape(16.dp),colors=CardDefaults.cardColors(containerColor=CardGraphite)){
+                Card(Modifier.fillMaxWidth().height(140.dp).clickable{if(hapticsEnabled)haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove);onCategory(item.name)},shape=RoundedCornerShape(16.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)){
                     Column(Modifier.fillMaxSize().padding(14.dp),verticalArrangement=Arrangement.SpaceBetween){
-                        Box(Modifier.size(42.dp).background(Graphite,RoundedCornerShape(13.dp)),contentAlignment=Alignment.Center){
+                        Box(Modifier.size(42.dp).background(MaterialTheme.colorScheme.background,RoundedCornerShape(13.dp)),contentAlignment=Alignment.Center){
                             Icon(categoryIcon(item.name),null,tint=Amber,modifier=Modifier.size(25.dp))
                         }
-                        Column{Text(item.name,fontWeight=FontWeight.SemiBold,fontSize=14.sp);Spacer(Modifier.height(4.dp));Text(item.detail,color=Muted,fontSize=11.sp,lineHeight=15.sp)}
+                        Column{Text(item.name,fontWeight=FontWeight.SemiBold,fontSize=14.sp);Spacer(Modifier.height(4.dp));Text(item.detail,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=11.sp,lineHeight=15.sp)}
                     }
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun SettingsScreen(
+    themeMode:String,precision:Int,haptics:Boolean,history:List<HistoryEntry>,
+    onHistoryAdd:(HistoryEntry)->Unit,onHistoryDelete:(String)->Unit,onHistoryClear:()->Unit,
+    onThemeChange:(String)->Unit,onPrecisionChange:(Int)->Unit,onHapticsChange:(Boolean)->Unit,
+    onReset:()->Unit,onBack:()->Unit,modifier:Modifier
+){
+    var confirmReset by remember{mutableStateOf(false)}
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp)){
+        Row(verticalAlignment=Alignment.CenterVertically){
+            IconButton(onClick=onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
+            Text("Settings",fontSize=22.sp,fontWeight=FontWeight.Bold)
+        }
+        Text("Appearance",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(start=8.dp,top=18.dp,bottom=8.dp))
+        Card(colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),modifier=Modifier.fillMaxWidth()){
+            Column(Modifier.padding(16.dp)){
+                Text("Theme",fontWeight=FontWeight.SemiBold)
+                Text("Choose how ElectriCalc looks.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=12.sp,modifier=Modifier.padding(top=4.dp,bottom=12.dp))
+                Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()){
+                    listOf("System default","Light","Dark").forEach{mode->
+                        FilterChip(selected=themeMode==mode,onClick={onThemeChange(mode)},label={Text(mode)},modifier=Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        Text("Calculation preferences",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(start=8.dp,top=20.dp,bottom=8.dp))
+        Card(colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),modifier=Modifier.fillMaxWidth()){
+            Column(Modifier.padding(16.dp)){
+                Text("Decimal precision",fontWeight=FontWeight.SemiBold)
+                Text("Choose the number of decimal places shown in calculator results.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=12.sp,modifier=Modifier.padding(top=4.dp,bottom=12.dp))
+                Row(horizontalArrangement=Arrangement.spacedBy(10.dp),modifier=Modifier.fillMaxWidth()){
+                    listOf(2,4,6).forEach{digits->
+                        FilterChip(selected=precision==digits,onClick={onPrecisionChange(digits)},label={Text("$digits places")},modifier=Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        Text("Interaction",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(start=8.dp,top=20.dp,bottom=8.dp))
+        Card(colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),modifier=Modifier.fillMaxWidth()){
+            Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically){
+                Column(Modifier.weight(1f)){
+                    Text("Haptic feedback",fontWeight=FontWeight.SemiBold)
+                    Text("Vibrate briefly when you tap app controls.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=12.sp)
+                }
+                Switch(checked=haptics,onCheckedChange=onHapticsChange)
+            }
+        }
+        Text("About",fontWeight=FontWeight.SemiBold,color=Amber,modifier=Modifier.padding(start=8.dp,top=20.dp,bottom=8.dp))
+        Card(colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),modifier=Modifier.fillMaxWidth()){
+            Column(Modifier.padding(16.dp)){
+                Text("ElectriCalc",fontWeight=FontWeight.Bold,fontSize=17.sp)
+                Text("Version 1.7.0",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),modifier=Modifier.padding(top=3.dp))
+                Text("Offline-first electrical engineering calculator. Your calculations run on your device.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=12.sp,modifier=Modifier.padding(top=8.dp))
+            }
+        }
+        OutlinedButton(onClick={confirmReset=true},modifier=Modifier.fillMaxWidth().padding(top=20.dp)){
+            Icon(Icons.Default.RestartAlt,null);Spacer(Modifier.width(8.dp));Text("Reset preferences")
+        }
+        Spacer(Modifier.height(24.dp))
+    }
+    if(confirmReset){
+        AlertDialog(
+            onDismissRequest={confirmReset=false},
+            title={Text("Reset preferences?")},
+            text={Text("This restores System default theme, 4 decimal places and enabled haptic feedback.")},
+            confirmButton={TextButton(onClick={onReset();confirmReset=false}){Text("Reset",color=Amber)}},
+            dismissButton={TextButton(onClick={confirmReset=false}){Text("Cancel")}},
+            containerColor=MaterialTheme.colorScheme.surface
+        )
     }
 }
 
@@ -208,15 +405,15 @@ private fun CategoryScreen(category:String,modifier:Modifier,onBack:()->Unit,onS
     val list=CalculatorCatalog.all.filter{it.category==category}
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)};Text(category,fontSize=21.sp,fontWeight=FontWeight.Bold)}
-        if(list.isEmpty())Text("Calculators for this category will be added in a later phase.",color=Muted,modifier=Modifier.padding(16.dp))
+        if(list.isEmpty())Text("Calculators for this category will be added in a later phase.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),modifier=Modifier.padding(16.dp))
         else{
-            Text("${list.size} calculators available",color=Muted,modifier=Modifier.padding(start=8.dp,bottom=12.dp))
+            Text("${list.size} calculators available",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),modifier=Modifier.padding(start=8.dp,bottom=12.dp))
             list.forEach{item->
-                Card(Modifier.fillMaxWidth().padding(vertical=5.dp).clickable{onSelect(item)},colors=CardDefaults.cardColors(containerColor=CardGraphite)){
+                Card(Modifier.fillMaxWidth().padding(vertical=5.dp).clickable{onSelect(item)},colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)){
                     Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){
                         Icon(Icons.Default.Calculate,null,tint=Amber)
-                        Column(Modifier.weight(1f).padding(start=12.dp)){Text(item.name,fontWeight=FontWeight.SemiBold);Text(item.description,color=Muted,fontSize=12.sp)}
-                        Icon(Icons.Default.ChevronRight,null,tint=Muted)
+                        Column(Modifier.weight(1f).padding(start=12.dp)){Text(item.name,fontWeight=FontWeight.SemiBold);Text(item.description,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp)}
+                        Icon(Icons.Default.ChevronRight,null,tint=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f))
                     }
                 }
             }
@@ -226,15 +423,16 @@ private fun CategoryScreen(category:String,modifier:Modifier,onBack:()->Unit,onS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
-    if(calc.id.startsWith("conv")) ConversionCalculatorScreen(calc,favorite,modifier,onBack,onFavorite)
-    else StandardCalculatorScreen(calc,answer,error,favorite,modifier,onBack,onFavorite,onCalculate,onReset)
+private fun CalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onHistoryAdd:(HistoryEntry)->Unit,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
+    if(calc.id.startsWith("conv")) ConversionCalculatorScreen(calc,favorite,modifier,onBack,onFavorite,onHistoryAdd)
+    else StandardCalculatorScreen(calc,answer,error,favorite,modifier,onBack,onFavorite,onCalculate,onReset,onHistoryAdd,LocalPrecision.current)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ConversionCalculatorScreen(calc:CalcSpec,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit){
+private fun ConversionCalculatorScreen(calc:CalcSpec,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onHistoryAdd:(HistoryEntry)->Unit){
     val units=CalculatorCatalog.conversionUnits(calc.id)
+    val resultPrecision=LocalPrecision.current
     var fromUnit by remember(calc.id){mutableStateOf(units.first())}
     var toUnit by remember(calc.id){mutableStateOf(units.getOrElse(1){units.first()})}
     var input by remember(calc.id){mutableStateOf("")}
@@ -245,10 +443,10 @@ private fun ConversionCalculatorScreen(calc:CalcSpec,favorite:Boolean,modifier:M
     Column(modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(start=18.dp,end=18.dp,top=18.dp,bottom=110.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){
             IconButton(onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
-            Column(Modifier.weight(1f)){Text(calc.name,fontSize=20.sp,fontWeight=FontWeight.Bold);Text(calc.category,color=Muted,fontSize=12.sp)}
+            Column(Modifier.weight(1f)){Text(calc.name,fontSize=20.sp,fontWeight=FontWeight.Bold);Text(calc.category,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp)}
             IconButton(onFavorite){Icon(if(favorite)Icons.Default.Favorite else Icons.Default.FavoriteBorder,null,tint=Amber)}
         }
-        Text(calc.description,color=Muted,modifier=Modifier.padding(start=8.dp,bottom=22.dp))
+        Text(calc.description,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),modifier=Modifier.padding(start=8.dp,bottom=22.dp))
         Text("Convert from",fontWeight=FontWeight.SemiBold)
         ExposedDropdownMenuBox(expanded=fromExpanded,onExpandedChange={fromExpanded=it}){
             OutlinedTextField(value=fromUnit,onValueChange={},readOnly=true,modifier=Modifier.menuAnchor().fillMaxWidth(),trailingIcon={ExposedDropdownMenuDefaults.TrailingIcon(fromExpanded)})
@@ -271,19 +469,28 @@ private fun ConversionCalculatorScreen(calc:CalcSpec,favorite:Boolean,modifier:M
             Button(onClick={
                 val number=input.trim().toDoubleOrNull()
                 if(number==null){result=null;error="Enter a valid number."}
-                else try{result=CalculatorCatalog.convert(calc.id,fromUnit,toUnit,number);error=null}
-                catch(e:Exception){result=null;error=e.message?: "Check the entered value."}
+                else try{
+                    val converted=CalculatorCatalog.convert(calc.id,fromUnit,toUnit,number)
+                    result=converted;error=null
+                    val stamp=System.currentTimeMillis()
+                    onHistoryAdd(HistoryEntry(
+                        id="${calc.id}-$stamp",calculatorId=calc.id,name=calc.name,category=calc.category,
+                        details="$input $fromUnit to $toUnit",
+                        result="${String.format(Locale.US,"% .${resultPrecision}f",converted.value).trim()} $toUnit",
+                        timestamp=stamp
+                    ))
+                }catch(e:Exception){result=null;error=e.message?: "Check the entered value."}
             },modifier=Modifier.weight(1f)){Icon(Icons.Default.SwapHoriz,null);Spacer(Modifier.width(6.dp));Text("Convert")}
             OutlinedButton(onClick={input="";result=null;error=null}){Text("Reset")}
         }
         Spacer(Modifier.height(20.dp))
-        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=CardGraphite)){
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)){
             Column(Modifier.padding(16.dp)){
                 Text("Result",fontWeight=FontWeight.SemiBold,color=Amber)
                 if(result!=null){
-                    Text("${input.trim()} $fromUnit = ${String.format(Locale.US,"%.6f",result!!.value).trimEnd('0').trimEnd('.')} $toUnit",fontSize=21.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=10.dp))
-                    Text("Formula: ${result!!.formula}",color=Muted,modifier=Modifier.padding(top=8.dp))
-                } else Text("Your converted value will appear here.",color=Muted,modifier=Modifier.padding(top=8.dp))
+                    Text("${input.trim()} $fromUnit = ${String.format(Locale.US,"% .${LocalPrecision.current}f",result!!.value).trim().trimEnd('0').trimEnd('.')} $toUnit",fontSize=21.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=10.dp))
+                    Text("Formula: ${result!!.formula}",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),modifier=Modifier.padding(top=8.dp))
+                } else Text("Your converted value will appear here.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),modifier=Modifier.padding(top=8.dp))
                 if(error!=null)Text(error!!,color=Color(0xFFFF8A80),modifier=Modifier.padding(top=10.dp))
             }
         }
@@ -292,7 +499,7 @@ private fun ConversionCalculatorScreen(calc:CalcSpec,favorite:Boolean,modifier:M
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
+private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit,onHistoryAdd:(HistoryEntry)->Unit,precision:Int){
     var unknown by remember(calc.id){mutableStateOf(calc.fields.first().key)}
     val entries=remember(calc.id){mutableStateMapOf<String,String>()}
     var expanded by remember{mutableStateOf(false)}
@@ -300,10 +507,10 @@ private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:Stri
     Column(modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(start=18.dp,end=18.dp,top=18.dp,bottom=110.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){
             IconButton(onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
-            Column(Modifier.weight(1f)){Text(calc.name,fontSize=20.sp,fontWeight=FontWeight.Bold);Text(calc.category,color=Muted,fontSize=12.sp)}
+            Column(Modifier.weight(1f)){Text(calc.name,fontSize=20.sp,fontWeight=FontWeight.Bold);Text(calc.category,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp)}
             IconButton(onFavorite){Icon(if(favorite)Icons.Default.Favorite else Icons.Default.FavoriteBorder,null,tint=Amber)}
         }
-        Text(calc.description,color=Muted,modifier=Modifier.padding(start=8.dp,bottom=16.dp))
+        Text(calc.description,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),modifier=Modifier.padding(start=8.dp,bottom=16.dp))
         Text("Select the value to calculate",fontWeight=FontWeight.SemiBold)
         ExposedDropdownMenuBox(expanded,{expanded=it}){
             OutlinedTextField(value=calc.fields.first{it.key==unknown}.let{"${it.label} (${it.key})"},onValueChange={},readOnly=true,modifier=Modifier.menuAnchor().fillMaxWidth(),trailingIcon={ExposedDropdownMenuDefaults.TrailingIcon(expanded)})
@@ -313,7 +520,7 @@ private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:Stri
         }
         Spacer(Modifier.height(16.dp));Text("Enter known values",fontWeight=FontWeight.SemiBold)
         known.forEach{field->
-            OutlinedTextField(value=entries[field.key]?: "",onValueChange={entries[field.key]=it},modifier=Modifier.fillMaxWidth().padding(top=9.dp),label={Text(field.label)},suffix={Text(field.unit,color=Muted)},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+            OutlinedTextField(value=entries[field.key]?: "",onValueChange={entries[field.key]=it},modifier=Modifier.fillMaxWidth().padding(top=9.dp),label={Text(field.label)},suffix={Text(field.unit,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f))},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
         }
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){
@@ -324,13 +531,13 @@ private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:Stri
             OutlinedButton(onClick={entries.clear();onReset()}){Text("Reset")}
         }
         Spacer(Modifier.height(18.dp))
-        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=CardGraphite)){
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)){
             Column(Modifier.padding(16.dp)){
                 Text("Formula",fontWeight=FontWeight.SemiBold,color=Amber);Text(calc.formula,modifier=Modifier.padding(top=6.dp))
                 answer?.let{r->
-                    HorizontalDivider(Modifier.padding(vertical=12.dp),color=Muted.copy(alpha=.3f))
+                    HorizontalDivider(Modifier.padding(vertical=12.dp),color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f).copy(alpha=.3f))
                     Text("Result",fontWeight=FontWeight.SemiBold,color=Amber)
-                    Text("${String.format(Locale.US,"%.4f",r.value)} ${r.unit}".trim(),fontSize=25.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(vertical=6.dp))
+                    Text("${String.format(Locale.US,"% .${LocalPrecision.current}f",r.value).trim()} ${r.unit}".trim(),fontSize=25.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(vertical=6.dp))
                     Text("Formula used",fontWeight=FontWeight.SemiBold);Text(r.formula,modifier=Modifier.padding(top=4.dp))
                     Text("Substitution",fontWeight=FontWeight.SemiBold,modifier=Modifier.padding(top=12.dp));Text(r.substitution,modifier=Modifier.padding(top=4.dp))
                     Text("Working",fontWeight=FontWeight.SemiBold,modifier=Modifier.padding(top=12.dp));r.steps.forEachIndexed{i,s->Text("${i+1}. $s",modifier=Modifier.padding(top=4.dp))}
@@ -338,8 +545,67 @@ private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:Stri
                 if(error!=null)Text(error,color=Color(0xFFFF8A80),modifier=Modifier.padding(top=12.dp))
             }
         }
-        if(calc.id=="acvalues")Text("For a sinusoidal waveform: RMS = Peak ÷ √2 and peak-to-peak = 2 × Peak.",color=Muted,fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
-        if(calc.id=="pf")Text("Use compatible active and apparent power values. Leading or lagging sign is not represented.",color=Muted,fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
+        if(calc.id=="acvalues")Text("For a sinusoidal waveform: RMS = Peak ÷ √2 and peak-to-peak = 2 × Peak.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
+        if(calc.id=="pf")Text("Use compatible active and apparent power values. Leading or lagging sign is not represented.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
+    }
+}
+
+@Composable
+private fun HistoryScreen(
+    history:List<HistoryEntry>,modifier:Modifier,
+    onOpen:(HistoryEntry)->Unit,onDelete:(String)->Unit,onClear:()->Unit
+){
+    var confirmClear by remember{mutableStateOf(false)}
+    Column(modifier.fillMaxSize().padding(horizontal=18.dp,vertical=16.dp)){
+        Row(verticalAlignment=Alignment.CenterVertically){
+            Column(Modifier.weight(1f)){
+                Text("History",fontSize=22.sp,fontWeight=FontWeight.Bold)
+                Text("${history.size} saved calculation${if(history.size==1)"" else "s"}",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=12.sp)
+            }
+            if(history.isNotEmpty()) TextButton(onClick={confirmClear=true}){Text("Clear all",color=Amber)}
+        }
+        if(history.isEmpty()){
+            Column(Modifier.fillMaxWidth().weight(1f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
+                Icon(Icons.Default.History,null,tint=MaterialTheme.colorScheme.onSurface.copy(alpha=.45f),modifier=Modifier.size(54.dp))
+                Text("No calculations yet",fontSize=18.sp,fontWeight=FontWeight.SemiBold,modifier=Modifier.padding(top=14.dp))
+                Text("Completed calculations will appear here automatically.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=13.sp,modifier=Modifier.padding(top=6.dp))
+            }
+        }else{
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())){
+                history.forEach{entry->
+                    Card(
+                        Modifier.fillMaxWidth().padding(vertical=5.dp).clickable{onOpen(entry)},
+                        colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)
+                    ){
+                        Column(Modifier.padding(14.dp)){
+                            Row(verticalAlignment=Alignment.CenterVertically){
+                                Column(Modifier.weight(1f)){
+                                    Text(entry.name,fontWeight=FontWeight.SemiBold)
+                                    Text(entry.category,color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=11.sp)
+                                }
+                                IconButton(onClick={onDelete(entry.id)}){
+                                    Icon(Icons.Default.DeleteOutline,null,tint=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f))
+                                }
+                            }
+                            Text(entry.details,color=MaterialTheme.colorScheme.onSurface.copy(alpha=.75f),fontSize=12.sp,modifier=Modifier.padding(top=6.dp))
+                            Text("Result: ${entry.result}",color=Amber,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
+                            Text(SimpleDateFormat("dd MMM yyyy, hh:mm a",Locale.getDefault()).format(Date(entry.timestamp)),color=MaterialTheme.colorScheme.onSurface.copy(alpha=.55f),fontSize=11.sp,modifier=Modifier.padding(top=5.dp))
+                            Text("Tap to open calculator",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.45f),fontSize=10.sp,modifier=Modifier.padding(top=5.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if(confirmClear){
+        AlertDialog(
+            onDismissRequest={confirmClear=false},
+            title={Text("Clear calculation history?")},
+            text={Text("This permanently deletes all saved history entries from this device.")},
+            confirmButton={TextButton(onClick={onClear();confirmClear=false}){Text("Clear all",color=Amber)}},
+            dismissButton={TextButton(onClick={confirmClear=false}){Text("Cancel")}},
+            containerColor=MaterialTheme.colorScheme.surface
+        )
     }
 }
 
@@ -347,21 +613,64 @@ private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:Stri
 private fun SavedScreen(title:String,list:List<CalcSpec>,modifier:Modifier,onSelect:(CalcSpec)->Unit){
     Column(modifier.fillMaxSize().padding(18.dp)){
         Text(title,fontSize=22.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(bottom=16.dp))
-        if(list.isEmpty())Text(if(title=="History")"Calculation history will be added in a later update." else "No favorite calculators saved yet.",color=Muted)
-        list.forEach{item->ListItem(headlineContent={Text(item.name)},supportingContent={Text(item.category)},leadingContent={Icon(Icons.Default.Calculate,null,tint=Amber)},modifier=Modifier.clickable{onSelect(item)},colors=ListItemDefaults.colors(containerColor=Graphite))}
+        if(list.isEmpty())Text(if(title=="History")"Calculation history will be added in a later update." else "No favorite calculators saved yet.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f))
+        list.forEach{item->ListItem(headlineContent={Text(item.name)},supportingContent={Text(item.category)},leadingContent={Icon(Icons.Default.Calculate,null,tint=Amber)},modifier=Modifier.clickable{onSelect(item)},colors=ListItemDefaults.colors(containerColor=MaterialTheme.colorScheme.background))}
     }
 }
 
 @Composable
 private fun LibraryScreen(modifier:Modifier){
+    var expandedCategory by remember { mutableStateOf<String?>(null) }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp)){
-        Text("Electrical Reference Library",fontSize=22.sp,fontWeight=FontWeight.Bold)
-        Text("Phase 1 formulas",color=Amber,fontWeight=FontWeight.SemiBold,modifier=Modifier.padding(top=14.dp,bottom=8.dp))
-        CalculatorCatalog.all.forEach{item->
-            Card(Modifier.fillMaxWidth().padding(vertical=4.dp),colors=CardDefaults.cardColors(containerColor=CardGraphite)){
-                Column(Modifier.padding(12.dp)){Text(item.name,fontWeight=FontWeight.SemiBold);Text(item.formula,color=Muted,modifier=Modifier.padding(top=4.dp))}
+        Text("Electrical Reference Library",fontSize=22.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(bottom=14.dp))
+        categories.forEach{category->
+            val formulas=CalculatorCatalog.all.filter{it.category==category.name}
+            if(formulas.isNotEmpty()){
+                val expanded=expandedCategory==category.name
+                Card(
+                    Modifier.fillMaxWidth().padding(vertical=5.dp),
+                    shape=RoundedCornerShape(15.dp),
+                    colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)
+                ){
+                    Column{
+                        Row(
+                            Modifier.fillMaxWidth().clickable{
+                                expandedCategory=if(expanded)null else category.name
+                            }.padding(horizontal=15.dp,vertical=16.dp),
+                            verticalAlignment=Alignment.CenterVertically
+                        ){
+                            Box(
+                                Modifier.size(44.dp).background(MaterialTheme.colorScheme.background,RoundedCornerShape(12.dp)),
+                                contentAlignment=Alignment.Center
+                            ){
+                                Icon(categoryIcon(category.name),null,tint=Amber,modifier=Modifier.size(25.dp))
+                            }
+                            Column(Modifier.weight(1f).padding(start=13.dp)){
+                                Text(category.name,fontWeight=FontWeight.SemiBold,fontSize=15.sp)
+                                Text("${formulas.size} formula${if(formulas.size==1)"" else "s"}",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp,modifier=Modifier.padding(top=3.dp))
+                            }
+                            Icon(
+                                if(expanded)Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription=if(expanded)"Collapse ${category.name}" else "Expand ${category.name}",
+                                tint=Amber,modifier=Modifier.size(28.dp)
+                            )
+                        }
+                        if(expanded){
+                            HorizontalDivider(color=MaterialTheme.colorScheme.onSurface.copy(alpha=.12f))
+                            Column(Modifier.padding(horizontal=12.dp,vertical=8.dp)){
+                                formulas.forEachIndexed{index,item->
+                                    Column(Modifier.fillMaxWidth().padding(horizontal=5.dp,vertical=9.dp)){
+                                        Text(item.name,fontWeight=FontWeight.SemiBold,fontSize=14.sp)
+                                        Text(item.formula,color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.7f),fontSize=14.sp,modifier=Modifier.padding(top=5.dp))
+                                    }
+                                    if(index<formulas.lastIndex) HorizontalDivider(color=MaterialTheme.colorScheme.onSurface.copy(alpha=.10f))
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        Text("Enter values using the SI units shown. Verify engineering decisions against applicable standards, equipment data and site conditions.",color=Muted,fontSize=12.sp,modifier=Modifier.padding(top=14.dp))
+        Text("Enter values using the SI units shown. Verify engineering decisions against applicable standards, equipment data and site conditions.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=12.sp,modifier=Modifier.padding(top=14.dp,bottom=12.dp))
     }
 }
