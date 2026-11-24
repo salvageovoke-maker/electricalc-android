@@ -39,3 +39,7 @@ Engineering assumptions:
 
 ## Phase 4
 Adds 20 calculators across Energy & Consumption and Unit Conversions, bringing the catalog to 72 calculators. Battery runtime and capacity are estimates based on nominal voltage, rated Ah, user-entered depth of discharge, load and inverter efficiency. Actual battery performance varies with age, temperature, chemistry and discharge rate. Energy cost is energy multiplied by the entered tariff rate and excludes fixed charges, taxes, demand charges and tariff bands.
+
+
+### Conversion interface update (v1.5.0)
+All 10 conversion tools use a source unit, one input value, and a target unit. Temperature supports every direction among Celsius, Fahrenheit and Kelvin.

@@ -93,7 +93,7 @@ class PhaseThreeCalculatorTest {
 class PhaseFourCalculatorTest {
  @org.junit.Test fun phaseFourHasTwentyCalculators() {
   org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Energy & Consumption"})
-  org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Conversions"})
+  org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Unit Conversions"})
  }
  @org.junit.Test fun energyCostExample() {
   val r=CalculatorCatalog.solve("energyCost","Cost",mapOf("E" to 150.0,"Rate" to 60.0))
@@ -111,4 +111,13 @@ class PhaseFourCalculatorTest {
   val r=CalculatorCatalog.solve("convPower","W",mapOf("kW" to 2.5))
   org.junit.Assert.assertEquals(2500.0,r.value,1e-9)
  }
+}
+
+class TwoUnitConversionTest {
+ @org.junit.Test fun convertsKilovoltsToVolts(){val r=CalculatorCatalog.convert("convVoltage","kV","V",2.5);org.junit.Assert.assertEquals(2500.0,r.value,1e-9)}
+ @org.junit.Test fun convertsMillivoltsToKilovolts(){val r=CalculatorCatalog.convert("convVoltage","mV","kV",500.0);org.junit.Assert.assertEquals(0.0005,r.value,1e-12)}
+ @org.junit.Test fun convertsJoulesToKilowattHours(){val r=CalculatorCatalog.convert("convEnergy","J","kWh",3600000.0);org.junit.Assert.assertEquals(1.0,r.value,1e-12)}
+ @org.junit.Test fun convertsFahrenheitToKelvin(){val r=CalculatorCatalog.convert("convTemperature","°F","K",32.0);org.junit.Assert.assertEquals(273.15,r.value,1e-9)}
+ @org.junit.Test fun convertsKelvinToFahrenheit(){val r=CalculatorCatalog.convert("convTemperature","K","°F",273.15);org.junit.Assert.assertEquals(32.0,r.value,1e-9)}
+ @org.junit.Test fun sameUnitConversionKeepsValue(){val r=CalculatorCatalog.convert("convCurrent","A","A",12.5);org.junit.Assert.assertEquals(12.5,r.value,1e-12)}
 }

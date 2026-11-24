@@ -69,19 +69,70 @@ object CalculatorCatalog {
         CalcSpec("loadDuration","Energy & Consumption","Load Duration and Energy","Energy from load over time",listOf(f("E","Energy","kWh"),f("P","Load","kW"),f("t","Duration","h")),"E = P × t"),
         CalcSpec("batteryRuntime","Energy & Consumption","Battery Runtime","Estimated runtime from battery capacity and load",listOf(f("t","Runtime","h"),f("V","Battery voltage","V"),f("Ah","Battery capacity","Ah"),f("DOD","Depth of discharge","%"),f("P","Load power","W"),f("η","Inverter efficiency","%")),"t = V × Ah × DOD × η ÷ P"),
         CalcSpec("batteryCapacity","Energy & Consumption","Battery Capacity","Required battery capacity",listOf(f("Ah","Capacity","Ah"),f("P","Load power","W"),f("t","Runtime","h"),f("V","Battery voltage","V"),f("DOD","Depth of discharge","%"),f("η","Inverter efficiency","%")),"Ah = P × t ÷ (V × DOD × η)"),
-        CalcSpec("convVoltage","Conversions","Voltage Conversion","Volts, millivolts and kilovolts",listOf(f("V","Volts","V"),f("mV","Millivolts","mV"),f("kV","Kilovolts","kV")),"1 kV = 1000 V"),
-        CalcSpec("convCurrent","Conversions","Current Conversion","Amperes, milliamperes and kiloamperes",listOf(f("A","Amperes","A"),f("mA","Milliamperes","mA"),f("kA","Kiloamperes","kA")),"1 kA = 1000 A"),
-        CalcSpec("convPower","Conversions","Power Conversion","Watts, kilowatts and megawatts",listOf(f("W","Watts","W"),f("kW","Kilowatts","kW"),f("MW","Megawatts","MW")),"1 MW = 1000 kW"),
-        CalcSpec("convEnergy","Conversions","Energy Conversion","Wh, kWh and joules",listOf(f("Wh","Watt-hours","Wh"),f("kWh","Kilowatt-hours","kWh"),f("J","Joules","J"),f("MJ","Megajoules","MJ")),"1 kWh = 3.6 MJ"),
-        CalcSpec("convFrequency","Conversions","Frequency Conversion","Hertz, kilohertz and megahertz",listOf(f("Hz","Hertz","Hz"),f("kHz","Kilohertz","kHz"),f("MHz","Megahertz","MHz")),"1 MHz = 1000 kHz"),
-        CalcSpec("convResistance","Conversions","Resistance Conversion","Ohms, kilohms and megohms",listOf(f("Ω","Ohms","Ω"),f("kΩ","Kilohms","kΩ"),f("MΩ","Megohms","MΩ")),"1 MΩ = 1000 kΩ"),
-        CalcSpec("convCapacitance","Conversions","Capacitance Conversion","Farads, microfarads and nanofarads",listOf(f("F","Farads","F"),f("μF","Microfarads","μF"),f("nF","Nanofarads","nF")),"1 F = 1,000,000 μF"),
-        CalcSpec("convInductance","Conversions","Inductance Conversion","Henries, millihenries and microhenries",listOf(f("H","Henries","H"),f("mH","Millihenries","mH"),f("μH","Microhenries","μH")),"1 H = 1000 mH"),
-        CalcSpec("convLength","Conversions","Length Conversion","Metres, millimetres and kilometres",listOf(f("m","Metres","m"),f("mm","Millimetres","mm"),f("km","Kilometres","km")),"1 km = 1000 m"),
-        CalcSpec("convTemperature","Conversions","Temperature Conversion","Celsius, Fahrenheit and Kelvin",listOf(f("C","Celsius","°C"),f("F","Fahrenheit","°F"),f("K","Kelvin","K")),"°F = (°C × 9/5) + 32")
+        CalcSpec("convVoltage","Unit Conversions","Voltage Conversion","Volts, millivolts and kilovolts",listOf(f("V","Volts","V"),f("mV","Millivolts","mV"),f("kV","Kilovolts","kV")),"1 kV = 1000 V"),
+        CalcSpec("convCurrent","Unit Conversions","Current Conversion","Amperes, milliamperes and kiloamperes",listOf(f("A","Amperes","A"),f("mA","Milliamperes","mA"),f("kA","Kiloamperes","kA")),"1 kA = 1000 A"),
+        CalcSpec("convPower","Unit Conversions","Power Conversion","Watts, kilowatts and megawatts",listOf(f("W","Watts","W"),f("kW","Kilowatts","kW"),f("MW","Megawatts","MW")),"1 MW = 1000 kW"),
+        CalcSpec("convEnergy","Unit Conversions","Energy Conversion","Wh, kWh and joules",listOf(f("Wh","Watt-hours","Wh"),f("kWh","Kilowatt-hours","kWh"),f("J","Joules","J"),f("MJ","Megajoules","MJ")),"1 kWh = 3.6 MJ"),
+        CalcSpec("convFrequency","Unit Conversions","Frequency Conversion","Hertz, kilohertz and megahertz",listOf(f("Hz","Hertz","Hz"),f("kHz","Kilohertz","kHz"),f("MHz","Megahertz","MHz")),"1 MHz = 1000 kHz"),
+        CalcSpec("convResistance","Unit Conversions","Resistance Conversion","Ohms, kilohms and megohms",listOf(f("Ω","Ohms","Ω"),f("kΩ","Kilohms","kΩ"),f("MΩ","Megohms","MΩ")),"1 MΩ = 1000 kΩ"),
+        CalcSpec("convCapacitance","Unit Conversions","Capacitance Conversion","Farads, microfarads and nanofarads",listOf(f("F","Farads","F"),f("μF","Microfarads","μF"),f("nF","Nanofarads","nF")),"1 F = 1,000,000 μF"),
+        CalcSpec("convInductance","Unit Conversions","Inductance Conversion","Henries, millihenries and microhenries",listOf(f("H","Henries","H"),f("mH","Millihenries","mH"),f("μH","Microhenries","μH")),"1 H = 1000 mH"),
+        CalcSpec("convLength","Unit Conversions","Length Conversion","Metres, millimetres and kilometres",listOf(f("m","Metres","m"),f("mm","Millimetres","mm"),f("km","Kilometres","km")),"1 km = 1000 m"),
+        CalcSpec("convTemperature","Unit Conversions","Temperature Conversion","Celsius, Fahrenheit and Kelvin",listOf(f("C","Celsius","°C"),f("F","Fahrenheit","°F"),f("K","Kelvin","K")),"°F = (°C × 9/5) + 32")
 
 
     )
+
+    fun conversionUnits(id:String):List<String> = when(id){
+        "convVoltage" -> listOf("V","mV","kV")
+        "convCurrent" -> listOf("A","mA","kA")
+        "convPower" -> listOf("W","kW","MW")
+        "convEnergy" -> listOf("J","Wh","kWh","MJ")
+        "convFrequency" -> listOf("Hz","kHz","MHz")
+        "convResistance" -> listOf("Ω","kΩ","MΩ")
+        "convCapacitance" -> listOf("F","μF","nF")
+        "convInductance" -> listOf("H","mH","μH")
+        "convLength" -> listOf("m","mm","km")
+        "convTemperature" -> listOf("°C","°F","K")
+        else -> error("Conversion not available.")
+    }
+
+    fun convert(id:String,from:String,to:String,value:Double):CalcAnswer {
+        require(value.isFinite()) { "Enter a finite numeric value." }
+        require(from in conversionUnits(id) && to in conversionUnits(id)) { "Select valid conversion units." }
+        val result:Double
+        val formula:String
+        if(id=="convTemperature"){
+            val c=when(from){"°C"->value;"°F"->(value-32.0)*5.0/9.0;"K"->value-273.15;else->error("Unsupported temperature unit.")}
+            result=when(to){"°C"->c;"°F"->c*9.0/5.0+32.0;"K"->c+273.15;else->error("Unsupported temperature unit.")}
+            formula=when{
+                from=="°C"&&to=="°F"->"°F = (°C × 9/5) + 32"
+                from=="°F"&&to=="°C"->"°C = (°F − 32) × 5/9"
+                from=="°C"&&to=="K"->"K = °C + 273.15"
+                from=="K"&&to=="°C"->"°C = K − 273.15"
+                from=="°F"&&to=="K"->"K = (°F − 32) × 5/9 + 273.15"
+                else->"°F = (K − 273.15) × 9/5 + 32"
+            }
+            if(to=="K") require(result>=0.0) { "Temperature cannot be below absolute zero." }
+        } else {
+            val f=when(id){
+                "convVoltage"->mapOf("V" to 1.0,"mV" to 1e-3,"kV" to 1e3)
+                "convCurrent"->mapOf("A" to 1.0,"mA" to 1e-3,"kA" to 1e3)
+                "convPower"->mapOf("W" to 1.0,"kW" to 1e3,"MW" to 1e6)
+                "convEnergy"->mapOf("J" to 1.0,"Wh" to 3600.0,"kWh" to 3600000.0,"MJ" to 1e6)
+                "convFrequency"->mapOf("Hz" to 1.0,"kHz" to 1e3,"MHz" to 1e6)
+                "convResistance"->mapOf("Ω" to 1.0,"kΩ" to 1e3,"MΩ" to 1e6)
+                "convCapacitance"->mapOf("F" to 1.0,"μF" to 1e-6,"nF" to 1e-9)
+                "convInductance"->mapOf("H" to 1.0,"mH" to 1e-3,"μH" to 1e-6)
+                "convLength"->mapOf("m" to 1.0,"mm" to 1e-3,"km" to 1e3)
+                else->error("Conversion not available.")
+            }
+            result=value*f.getValue(from)/f.getValue(to)
+            formula="Result = input × source factor ÷ target factor (base unit)"
+        }
+        require(result.isFinite()) { "Converted value is outside the supported range." }
+        return CalcAnswer(result,to,formula,"$value $from → $result $to",listOf("Convert the input from $from to $to."))
+    }
 
     fun solve(id:String,u:String,m:Map<String,Double>):CalcAnswer {
         fun v(k:String)=m[k] ?: error("Enter the required known values.")
