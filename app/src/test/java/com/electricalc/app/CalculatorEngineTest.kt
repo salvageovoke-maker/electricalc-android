@@ -93,7 +93,7 @@ class PhaseThreeCalculatorTest {
 class PhaseFourCalculatorTest {
  @org.junit.Test fun phaseFourHasTwentyCalculators() {
   org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Energy & Consumption"})
-  org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Unit Conversions"})
+  org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Conversions"})
  }
  @org.junit.Test fun energyCostExample() {
   val r=CalculatorCatalog.solve("energyCost","Cost",mapOf("E" to 150.0,"Rate" to 60.0))
