@@ -69,16 +69,16 @@ object CalculatorCatalog {
         CalcSpec("loadDuration","Energy & Consumption","Load Duration and Energy","Energy from load over time",listOf(f("E","Energy","kWh"),f("P","Load","kW"),f("t","Duration","h")),"E = P × t"),
         CalcSpec("batteryRuntime","Energy & Consumption","Battery Runtime","Estimated runtime from battery capacity and load",listOf(f("t","Runtime","h"),f("V","Battery voltage","V"),f("Ah","Battery capacity","Ah"),f("DOD","Depth of discharge","%"),f("P","Load power","W"),f("η","Inverter efficiency","%")),"t = V × Ah × DOD × η ÷ P"),
         CalcSpec("batteryCapacity","Energy & Consumption","Battery Capacity","Required battery capacity",listOf(f("Ah","Capacity","Ah"),f("P","Load power","W"),f("t","Runtime","h"),f("V","Battery voltage","V"),f("DOD","Depth of discharge","%"),f("η","Inverter efficiency","%")),"Ah = P × t ÷ (V × DOD × η)"),
-        CalcSpec("convVoltage","Unit Conversions","Voltage Conversion","Volts, millivolts and kilovolts",listOf(f("V","Volts","V"),f("mV","Millivolts","mV"),f("kV","Kilovolts","kV")),"1 kV = 1000 V"),
-        CalcSpec("convCurrent","Unit Conversions","Current Conversion","Amperes, milliamperes and kiloamperes",listOf(f("A","Amperes","A"),f("mA","Milliamperes","mA"),f("kA","Kiloamperes","kA")),"1 kA = 1000 A"),
-        CalcSpec("convPower","Unit Conversions","Power Conversion","Watts, kilowatts and megawatts",listOf(f("W","Watts","W"),f("kW","Kilowatts","kW"),f("MW","Megawatts","MW")),"1 MW = 1000 kW"),
-        CalcSpec("convEnergy","Unit Conversions","Energy Conversion","Wh, kWh and joules",listOf(f("Wh","Watt-hours","Wh"),f("kWh","Kilowatt-hours","kWh"),f("J","Joules","J"),f("MJ","Megajoules","MJ")),"1 kWh = 3.6 MJ"),
-        CalcSpec("convFrequency","Unit Conversions","Frequency Conversion","Hertz, kilohertz and megahertz",listOf(f("Hz","Hertz","Hz"),f("kHz","Kilohertz","kHz"),f("MHz","Megahertz","MHz")),"1 MHz = 1000 kHz"),
-        CalcSpec("convResistance","Unit Conversions","Resistance Conversion","Ohms, kilohms and megohms",listOf(f("Ω","Ohms","Ω"),f("kΩ","Kilohms","kΩ"),f("MΩ","Megohms","MΩ")),"1 MΩ = 1000 kΩ"),
-        CalcSpec("convCapacitance","Unit Conversions","Capacitance Conversion","Farads, microfarads and nanofarads",listOf(f("F","Farads","F"),f("μF","Microfarads","μF"),f("nF","Nanofarads","nF")),"1 F = 1,000,000 μF"),
-        CalcSpec("convInductance","Unit Conversions","Inductance Conversion","Henries, millihenries and microhenries",listOf(f("H","Henries","H"),f("mH","Millihenries","mH"),f("μH","Microhenries","μH")),"1 H = 1000 mH"),
-        CalcSpec("convLength","Unit Conversions","Length Conversion","Metres, millimetres and kilometres",listOf(f("m","Metres","m"),f("mm","Millimetres","mm"),f("km","Kilometres","km")),"1 km = 1000 m"),
-        CalcSpec("convTemperature","Unit Conversions","Temperature Conversion","Celsius, Fahrenheit and Kelvin",listOf(f("C","Celsius","°C"),f("F","Fahrenheit","°F"),f("K","Kelvin","K")),"°F = (°C × 9/5) + 32")
+        CalcSpec("convVoltage","Conversions","Voltage Conversion","Volts, millivolts and kilovolts",listOf(f("V","Volts","V"),f("mV","Millivolts","mV"),f("kV","Kilovolts","kV")),"1 kV = 1000 V"),
+        CalcSpec("convCurrent","Conversions","Current Conversion","Amperes, milliamperes and kiloamperes",listOf(f("A","Amperes","A"),f("mA","Milliamperes","mA"),f("kA","Kiloamperes","kA")),"1 kA = 1000 A"),
+        CalcSpec("convPower","Conversions","Power Conversion","Watts, kilowatts and megawatts",listOf(f("W","Watts","W"),f("kW","Kilowatts","kW"),f("MW","Megawatts","MW")),"1 MW = 1000 kW"),
+        CalcSpec("convEnergy","Conversions","Energy Conversion","Wh, kWh and joules",listOf(f("Wh","Watt-hours","Wh"),f("kWh","Kilowatt-hours","kWh"),f("J","Joules","J"),f("MJ","Megajoules","MJ")),"1 kWh = 3.6 MJ"),
+        CalcSpec("convFrequency","Conversions","Frequency Conversion","Hertz, kilohertz and megahertz",listOf(f("Hz","Hertz","Hz"),f("kHz","Kilohertz","kHz"),f("MHz","Megahertz","MHz")),"1 MHz = 1000 kHz"),
+        CalcSpec("convResistance","Conversions","Resistance Conversion","Ohms, kilohms and megohms",listOf(f("Ω","Ohms","Ω"),f("kΩ","Kilohms","kΩ"),f("MΩ","Megohms","MΩ")),"1 MΩ = 1000 kΩ"),
+        CalcSpec("convCapacitance","Conversions","Capacitance Conversion","Farads, microfarads and nanofarads",listOf(f("F","Farads","F"),f("μF","Microfarads","μF"),f("nF","Nanofarads","nF")),"1 F = 1,000,000 μF"),
+        CalcSpec("convInductance","Conversions","Inductance Conversion","Henries, millihenries and microhenries",listOf(f("H","Henries","H"),f("mH","Millihenries","mH"),f("μH","Microhenries","μH")),"1 H = 1000 mH"),
+        CalcSpec("convLength","Conversions","Length Conversion","Metres, millimetres and kilometres",listOf(f("m","Metres","m"),f("mm","Millimetres","mm"),f("km","Kilometres","km")),"1 km = 1000 m"),
+        CalcSpec("convTemperature","Conversions","Temperature Conversion","Celsius, Fahrenheit and Kelvin",listOf(f("C","Celsius","°C"),f("F","Fahrenheit","°F"),f("K","Kelvin","K")),"°F = (°C × 9/5) + 32")
 
 
     )
