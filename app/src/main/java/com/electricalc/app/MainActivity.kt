@@ -161,7 +161,7 @@ private fun categoryIcon(name:String):ImageVector = when(name){
     "Three-Phase Systems" -> Icons.Default.DeviceHub
     "Transformers" -> Icons.Default.Transform
     "Power Distribution" -> Icons.Default.AccountTree
-    "Cable Sizing & Ampacity" -> Icons.Default.AccountTree
+    "Cable Sizing & Ampacity" -> Icons.Default.Straighten
     "Electrical Machines" -> Icons.Default.PrecisionManufacturing
     "Energy & Consumption" -> Icons.Default.Speed
     "Conversions" -> Icons.Default.SwapHoriz

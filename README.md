@@ -150,3 +150,11 @@ Reference data consulted for the automatic ampacity tables:
 - Fixed the Cable Sizing screen back-button callback by explicitly passing `onClick = onBack` to Material 3 `IconButton`.
 - Bumped Android version to 1.10.2 (versionCode 18).
 - No cable-sizing formulas, ampacity tables, calculator behavior, or stored user data were changed.
+
+
+## Version 1.10.3 category icon correction
+
+- Kept the Power Distribution category icon as the account-tree symbol.
+- Changed Cable Sizing & Ampacity to the ruler/measurement symbol so the two categories are visually distinct in the home grid, drawer, and category screens.
+- Bumped Android version to 1.10.3 (versionCode 19).
+- No calculator logic, saved data, or other interface behavior changed.
