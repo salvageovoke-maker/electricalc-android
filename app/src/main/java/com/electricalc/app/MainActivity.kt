@@ -469,7 +469,7 @@ private fun CableSizingScreen(modifier:Modifier,onBack:()->Unit){
     }
     Column(modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=18.dp,vertical=14.dp)){
         Row(verticalAlignment=Alignment.CenterVertically){
-            IconButton(onClick){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
+            IconButton(onClick = onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
             Column(Modifier.weight(1f)){
                 Text("Cable Sizing & Ampacity",fontSize=20.sp,fontWeight=FontWeight.Bold)
                 Text("Preliminary cable design check",fontSize=12.sp,color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f))

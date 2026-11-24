@@ -143,3 +143,10 @@ Engineering scope:
 Reference data consulted for the automatic ampacity tables:
 - IEC 60364-5-52:2009+AMD1:2024, Annex B, Tables B.52.2 to B.52.5 (PVC and XLPE/EPR, two or three loaded conductors): https://iso.ieclist.ink/iec/IEC%2060364-5-52-2009%2BAMD1-2024%20CSV%20PDF.pdf
 - Cross-check of table structure and reference installation methods: https://www.ti-soft.com/en/support/help/electricaldesign/standards/iec-60364-5-52/current-carrying-capacity
+
+
+## Version 1.10.2 Compose build correction
+
+- Fixed the Cable Sizing screen back-button callback by explicitly passing `onClick = onBack` to Material 3 `IconButton`.
+- Bumped Android version to 1.10.2 (versionCode 18).
+- No cable-sizing formulas, ampacity tables, calculator behavior, or stored user data were changed.
