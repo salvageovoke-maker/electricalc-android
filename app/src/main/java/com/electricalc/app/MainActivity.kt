@@ -191,6 +191,7 @@ private fun ConversionCalculatorScreen(calc:CalcSpec,favorite:Boolean,modifier:M
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
     var unknown by remember(calc.id){mutableStateOf(calc.fields.first().key)}
