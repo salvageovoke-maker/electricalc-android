@@ -87,3 +87,11 @@ All 10 conversion tools use a source unit, one input value, and a target unit. T
 - Added safe default values for the optional history state and history callbacks in ElectriCalcApp.
 - This keeps lightweight preview or alternate entry-point calls source-compatible while the production root continues to pass the persistent history state and handlers.
 - No calculator logic, history storage, category grouping, accordion behavior, or formulas were changed.
+
+
+## Version 1.9.2 Settings screen build correction
+
+- Removed accidentally inherited calculation-history parameters from the SettingsScreen function signature.
+- SettingsScreen now accepts only the settings values and callbacks used by its caller.
+- Persistent history remains owned by ElectriCalcApp and continues to flow into HistoryScreen and calculator screens.
+- No calculator formulas, category accordion behavior, or saved-history storage were changed.

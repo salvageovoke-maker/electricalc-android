@@ -333,8 +333,7 @@ private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onC
 
 @Composable
 private fun SettingsScreen(
-    themeMode:String,precision:Int,haptics:Boolean,history:List<HistoryEntry>,
-    onHistoryAdd:(HistoryEntry)->Unit,onHistoryDelete:(String)->Unit,onHistoryClear:()->Unit,
+    themeMode:String,precision:Int,haptics:Boolean,
     onThemeChange:(String)->Unit,onPrecisionChange:(Int)->Unit,onHapticsChange:(Boolean)->Unit,
     onReset:()->Unit,onBack:()->Unit,modifier:Modifier
 ){
