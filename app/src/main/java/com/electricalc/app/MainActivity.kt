@@ -128,6 +128,71 @@ private fun CategoryScreen(category:String,modifier:Modifier,onBack:()->Unit,onS
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
+    if(calc.id.startsWith("conv")) ConversionCalculatorScreen(calc,favorite,modifier,onBack,onFavorite)
+    else StandardCalculatorScreen(calc,answer,error,favorite,modifier,onBack,onFavorite,onCalculate,onReset)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConversionCalculatorScreen(calc:CalcSpec,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit){
+    val units=CalculatorCatalog.conversionUnits(calc.id)
+    var fromUnit by remember(calc.id){mutableStateOf(units.first())}
+    var toUnit by remember(calc.id){mutableStateOf(units.getOrElse(1){units.first()})}
+    var input by remember(calc.id){mutableStateOf("")}
+    var result by remember(calc.id){mutableStateOf<CalcAnswer?>(null)}
+    var error by remember(calc.id){mutableStateOf<String?>(null)}
+    var fromExpanded by remember{mutableStateOf(false)}
+    var toExpanded by remember{mutableStateOf(false)}
+    Column(modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(start=18.dp,end=18.dp,top=18.dp,bottom=110.dp)){
+        Row(verticalAlignment=Alignment.CenterVertically){
+            IconButton(onBack){Icon(Icons.Default.ArrowBack,null,tint=Amber)}
+            Column(Modifier.weight(1f)){Text(calc.name,fontSize=20.sp,fontWeight=FontWeight.Bold);Text(calc.category,color=Muted,fontSize=12.sp)}
+            IconButton(onFavorite){Icon(if(favorite)Icons.Default.Favorite else Icons.Default.FavoriteBorder,null,tint=Amber)}
+        }
+        Text(calc.description,color=Muted,modifier=Modifier.padding(start=8.dp,bottom=22.dp))
+        Text("Convert from",fontWeight=FontWeight.SemiBold)
+        ExposedDropdownMenuBox(expanded=fromExpanded,onExpandedChange={fromExpanded=it}){
+            OutlinedTextField(value=fromUnit,onValueChange={},readOnly=true,modifier=Modifier.menuAnchor().fillMaxWidth(),trailingIcon={ExposedDropdownMenuDefaults.TrailingIcon(fromExpanded)})
+            ExposedDropdownMenu(expanded=fromExpanded,onDismissRequest={fromExpanded=false}){
+                units.forEach{unit->DropdownMenuItem(text={Text(unit)},onClick={fromUnit=unit;result=null;error=null;fromExpanded=false})}
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(value=input,onValueChange={input=it;result=null;error=null},modifier=Modifier.fillMaxWidth(),label={Text("Enter value")},placeholder={Text("e.g. 2.5")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+        Spacer(Modifier.height(18.dp))
+        Text("Convert to",fontWeight=FontWeight.SemiBold)
+        ExposedDropdownMenuBox(expanded=toExpanded,onExpandedChange={toExpanded=it}){
+            OutlinedTextField(value=toUnit,onValueChange={},readOnly=true,modifier=Modifier.menuAnchor().fillMaxWidth(),trailingIcon={ExposedDropdownMenuDefaults.TrailingIcon(toExpanded)})
+            ExposedDropdownMenu(expanded=toExpanded,onDismissRequest={toExpanded=false}){
+                units.forEach{unit->DropdownMenuItem(text={Text(unit)},onClick={toUnit=unit;result=null;error=null;toExpanded=false})}
+            }
+        }
+        Spacer(Modifier.height(20.dp))
+        Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){
+            Button(onClick={
+                val number=input.trim().toDoubleOrNull()
+                if(number==null){result=null;error="Enter a valid number."}
+                else try{result=CalculatorCatalog.convert(calc.id,fromUnit,toUnit,number);error=null}
+                catch(e:Exception){result=null;error=e.message?: "Check the entered value."}
+            },modifier=Modifier.weight(1f)){Icon(Icons.Default.SwapHoriz,null);Spacer(Modifier.width(6.dp));Text("Convert")}
+            OutlinedButton(onClick={input="";result=null;error=null}){Text("Reset")}
+        }
+        Spacer(Modifier.height(20.dp))
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=CardGraphite)){
+            Column(Modifier.padding(16.dp)){
+                Text("Result",fontWeight=FontWeight.SemiBold,color=Amber)
+                if(result!=null){
+                    Text("${input.trim()} $fromUnit = ${String.format(Locale.US,"%.6f",result!!.value).trimEnd('0').trimEnd('.')} $toUnit",fontSize=21.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=10.dp))
+                    Text("Formula: ${result!!.formula}",color=Muted,modifier=Modifier.padding(top=8.dp))
+                } else Text("Your converted value will appear here.",color=Muted,modifier=Modifier.padding(top=8.dp))
+                if(error!=null)Text(error!!,color=Color(0xFFFF8A80),modifier=Modifier.padding(top=10.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StandardCalculatorScreen(calc:CalcSpec,answer:CalcAnswer?,error:String?,favorite:Boolean,modifier:Modifier,onBack:()->Unit,onFavorite:()->Unit,onCalculate:(String,Map<String,Double>)->Unit,onReset:()->Unit){
     var unknown by remember(calc.id){mutableStateOf(calc.fields.first().key)}
     val entries=remember(calc.id){mutableStateMapOf<String,String>()}
     var expanded by remember{mutableStateOf(false)}
