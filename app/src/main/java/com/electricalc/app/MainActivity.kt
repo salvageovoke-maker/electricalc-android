@@ -103,6 +103,7 @@ class MainActivity:ComponentActivity(){
 @Composable
 private fun ElectriCalcRoot(){
     val context= LocalContext.current
+    val appVersion = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "Unknown" }
     val prefs= remember { context.getSharedPreferences("electricalc_preferences", android.content.Context.MODE_PRIVATE) }
     var themeMode by remember { mutableStateOf(prefs.getString("theme_mode","System default") ?: "System default") }
     var precision by remember { mutableIntStateOf(prefs.getInt("decimal_precision",4)) }
@@ -262,7 +263,7 @@ private fun ElectriCalcApp(
                     modifier=Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
                     colors=NavigationDrawerItemDefaults.colors(unselectedIconColor=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),unselectedTextColor=MaterialTheme.colorScheme.onSurface)
                 )
-                Text("Version 1.7.0",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=11.sp,modifier=Modifier.padding(start=22.dp,bottom=18.dp,top=4.dp))
+                Text("Version $appVersion",color=MaterialTheme.colorScheme.onSurface.copy(alpha=0.65f),fontSize=11.sp,modifier=Modifier.padding(start=22.dp,bottom=18.dp,top=4.dp))
                 }
             }
         }
@@ -276,7 +277,7 @@ private fun ElectriCalcApp(
         }){padding->
             when{
                 settingsOpen->SettingsScreen(
-                    themeMode=themeMode,precision=precision,haptics=haptics,
+                    themeMode=themeMode,precision=precision,haptics=haptics,versionName=appVersion,
                     onThemeChange=onThemeChange,onPrecisionChange=onPrecisionChange,
                     onHapticsChange=onHapticsChange,onReset=onResetPreferences,
                     onBack={settingsOpen=false},modifier=Modifier.padding(padding)
@@ -363,7 +364,7 @@ private fun HomeScreen(query:String,onQuery:(String)->Unit,modifier:Modifier,onC
 
 @Composable
 private fun SettingsScreen(
-    themeMode:String,precision:Int,haptics:Boolean,
+    themeMode:String,precision:Int,haptics:Boolean,versionName:String,
     onThemeChange:(String)->Unit,onPrecisionChange:(Int)->Unit,onHapticsChange:(Boolean)->Unit,
     onReset:()->Unit,onBack:()->Unit,modifier:Modifier
 ){
@@ -411,7 +412,7 @@ private fun SettingsScreen(
         Card(colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),modifier=Modifier.fillMaxWidth()){
             Column(Modifier.padding(16.dp)){
                 Text("ElectriCalc",fontWeight=FontWeight.Bold,fontSize=17.sp)
-                Text("Version 1.7.0",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),modifier=Modifier.padding(top=3.dp))
+                Text("Version $versionName",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),modifier=Modifier.padding(top=3.dp))
                 Text("Offline-first electrical engineering calculator. Your calculations run on your device.",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.65f),fontSize=12.sp,modifier=Modifier.padding(top=8.dp))
             }
         }

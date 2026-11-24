@@ -10,8 +10,8 @@ android {
         applicationId = "com.electricalc.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "1.10.3"
+        versionCode = 20
+        versionName = "1.10.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }

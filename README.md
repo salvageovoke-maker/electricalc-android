@@ -158,3 +158,8 @@ Reference data consulted for the automatic ampacity tables:
 - Changed Cable Sizing & Ampacity to the ruler/measurement symbol so the two categories are visually distinct in the home grid, drawer, and category screens.
 - Bumped Android version to 1.10.3 (versionCode 19).
 - No calculator logic, saved data, or other interface behavior changed.
+
+
+## Version 1.10.4: Dynamic app version display
+- Updated the navigation drawer and Settings About section to read the installed app version from Android package metadata.
+- Removed hard-coded Version 1.7.0 labels so future releases display the correct version automatically.
