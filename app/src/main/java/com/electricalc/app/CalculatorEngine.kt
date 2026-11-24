@@ -58,7 +58,28 @@ object CalculatorCatalog {
         CalcSpec("motorInput","Electrical Machines","Motor Input Power","Electrical input power from output power and efficiency",listOf(f("Pin","Input power","kW"),f("Pout","Output power","kW"),f("η","Efficiency","%")),"Pin = Pout ÷ (η ÷ 100)"),
         CalcSpec("motorOutput","Electrical Machines","Motor Output Power","Mechanical output power from input power and efficiency",listOf(f("Pout","Output power","kW"),f("Pin","Input power","kW"),f("η","Efficiency","%")),"Pout = Pin × (η ÷ 100)"),
         CalcSpec("motorEff","Electrical Machines","Motor Efficiency","Mechanical output compared with electrical input",listOf(f("η","Efficiency","%"),f("Pout","Output power","kW"),f("Pin","Input power","kW")),"η = (Pout ÷ Pin) × 100"),
-        CalcSpec("motorCurrent","Electrical Machines","Three-Phase Motor Current","Line current from output power, voltage, power factor and efficiency",listOf(f("I","Line current","A"),f("Pout","Output power","kW"),f("V","Line voltage","V"),f("pf","Power factor",""),f("η","Efficiency","%")),"I = Pout × 1000 ÷ (√3 × V × pf × η)")
+        CalcSpec("motorCurrent","Electrical Machines","Three-Phase Motor Current","Line current from output power, voltage, power factor and efficiency",listOf(f("I","Line current","A"),f("Pout","Output power","kW"),f("V","Line voltage","V"),f("pf","Power factor",""),f("η","Efficiency","%")),"I = Pout × 1000 ÷ (√3 × V × pf × η)"),
+        CalcSpec("energyUse","Energy & Consumption","Electrical Energy Consumption","Energy from power and operating time",listOf(f("E","Energy","kWh"),f("P","Power","kW"),f("t","Operating time","h")),"E = P × t"),
+        CalcSpec("energyCost","Energy & Consumption","Energy Cost","Cost of consumed electrical energy",listOf(f("Cost","Energy cost","currency"),f("E","Energy consumed","kWh"),f("Rate","Tariff rate","currency/kWh")),"Cost = E × Rate"),
+        CalcSpec("avgPower","Energy & Consumption","Average Power","Average power from energy and time",listOf(f("P","Average power","kW"),f("E","Energy","kWh"),f("t","Time","h")),"P = E ÷ t"),
+        CalcSpec("operatingHours","Energy & Consumption","Operating Hours","Operating time from energy and average power",listOf(f("t","Operating time","h"),f("E","Energy","kWh"),f("P","Average power","kW")),"t = E ÷ P"),
+        CalcSpec("dailyEnergy","Energy & Consumption","Daily Energy Consumption","Daily energy from load and operating hours",listOf(f("E","Daily energy","kWh/day"),f("P","Load power","kW"),f("t","Hours per day","h")),"E = P × t"),
+        CalcSpec("monthlyEnergy","Energy & Consumption","Monthly Energy Consumption","Monthly energy from daily energy and days",listOf(f("Em","Monthly energy","kWh"),f("Ed","Daily energy","kWh/day"),f("d","Days","days")),"Em = Ed × d"),
+        CalcSpec("meterEnergy","Energy & Consumption","Energy from Meter Readings","Consumption between meter readings",listOf(f("E","Energy consumed","kWh"),f("End","Final reading","kWh"),f("Start","Initial reading","kWh")),"E = Final − Initial"),
+        CalcSpec("loadDuration","Energy & Consumption","Load Duration and Energy","Energy from load over time",listOf(f("E","Energy","kWh"),f("P","Load","kW"),f("t","Duration","h")),"E = P × t"),
+        CalcSpec("batteryRuntime","Energy & Consumption","Battery Runtime","Estimated runtime from battery capacity and load",listOf(f("t","Runtime","h"),f("V","Battery voltage","V"),f("Ah","Battery capacity","Ah"),f("DOD","Depth of discharge","%"),f("P","Load power","W"),f("η","Inverter efficiency","%")),"t = V × Ah × DOD × η ÷ P"),
+        CalcSpec("batteryCapacity","Energy & Consumption","Battery Capacity","Required battery capacity",listOf(f("Ah","Capacity","Ah"),f("P","Load power","W"),f("t","Runtime","h"),f("V","Battery voltage","V"),f("DOD","Depth of discharge","%"),f("η","Inverter efficiency","%")),"Ah = P × t ÷ (V × DOD × η)"),
+        CalcSpec("convVoltage","Unit Conversions","Voltage Conversion","Volts, millivolts and kilovolts",listOf(f("V","Volts","V"),f("mV","Millivolts","mV"),f("kV","Kilovolts","kV")),"1 kV = 1000 V"),
+        CalcSpec("convCurrent","Unit Conversions","Current Conversion","Amperes, milliamperes and kiloamperes",listOf(f("A","Amperes","A"),f("mA","Milliamperes","mA"),f("kA","Kiloamperes","kA")),"1 kA = 1000 A"),
+        CalcSpec("convPower","Unit Conversions","Power Conversion","Watts, kilowatts and megawatts",listOf(f("W","Watts","W"),f("kW","Kilowatts","kW"),f("MW","Megawatts","MW")),"1 MW = 1000 kW"),
+        CalcSpec("convEnergy","Unit Conversions","Energy Conversion","Wh, kWh and joules",listOf(f("Wh","Watt-hours","Wh"),f("kWh","Kilowatt-hours","kWh"),f("J","Joules","J"),f("MJ","Megajoules","MJ")),"1 kWh = 3.6 MJ"),
+        CalcSpec("convFrequency","Unit Conversions","Frequency Conversion","Hertz, kilohertz and megahertz",listOf(f("Hz","Hertz","Hz"),f("kHz","Kilohertz","kHz"),f("MHz","Megahertz","MHz")),"1 MHz = 1000 kHz"),
+        CalcSpec("convResistance","Unit Conversions","Resistance Conversion","Ohms, kilohms and megohms",listOf(f("Ω","Ohms","Ω"),f("kΩ","Kilohms","kΩ"),f("MΩ","Megohms","MΩ")),"1 MΩ = 1000 kΩ"),
+        CalcSpec("convCapacitance","Unit Conversions","Capacitance Conversion","Farads, microfarads and nanofarads",listOf(f("F","Farads","F"),f("μF","Microfarads","μF"),f("nF","Nanofarads","nF")),"1 F = 1,000,000 μF"),
+        CalcSpec("convInductance","Unit Conversions","Inductance Conversion","Henries, millihenries and microhenries",listOf(f("H","Henries","H"),f("mH","Millihenries","mH"),f("μH","Microhenries","μH")),"1 H = 1000 mH"),
+        CalcSpec("convLength","Unit Conversions","Length Conversion","Metres, millimetres and kilometres",listOf(f("m","Metres","m"),f("mm","Millimetres","mm"),f("km","Kilometres","km")),"1 km = 1000 m"),
+        CalcSpec("convTemperature","Unit Conversions","Temperature Conversion","Celsius, Fahrenheit and Kelvin",listOf(f("C","Celsius","°C"),f("F","Fahrenheit","°F"),f("K","Kelvin","K")),"°F = (°C × 9/5) + 32")
+
 
     )
 
@@ -318,6 +339,52 @@ object CalculatorCatalog {
                 "V"->{val a=v("Pout");val b=v("I");val c=v("pf");val d=v("η");pos(b,"Current");pos(c,"Power factor");pos(d,"Efficiency");x=a*1000/(kotlin.math.sqrt(3.0)*b*c*(d/100));unit="V";formula="V = Pout × 1000 ÷ (√3 × I × pf × η)";sub="V = $a × 1000 ÷ (√3 × $b × $c × ($d ÷ 100))";steps=listOf("Rearrange the three-phase motor input-current equation for voltage.")}
                 "pf"->{val a=v("Pout");val b=v("I");val c=v("V");val d=v("η");pos(b,"Current");pos(c,"Voltage");pos(d,"Efficiency");x=a*1000/(kotlin.math.sqrt(3.0)*b*c*(d/100));unit="";formula="pf = Pout × 1000 ÷ (√3 × V × I × η)";sub="pf = $a × 1000 ÷ (√3 × $c × $b × ($d ÷ 100))";steps=listOf("Rearrange the motor current equation for power factor.");require(x<=1.0){"Calculated power factor exceeds 1."}}
                 else->{val a=v("Pout");val b=v("I");val c=v("V");val d=v("pf");pos(b,"Current");pos(c,"Voltage");pos(d,"Power factor");x=a*100000/(kotlin.math.sqrt(3.0)*b*c*d);unit="%";formula="η = Pout × 100000 ÷ (√3 × V × I × pf)";sub="η = $a × 100000 ÷ (√3 × $c × $b × $d)";steps=listOf("Rearrange the three-phase motor current equation for efficiency.");require(x<=100.0){"Calculated efficiency exceeds 100%."}}
+            }
+
+
+            "energyUse","dailyEnergy","loadDuration","avgPower","operatingHours" -> {
+                val energyKey=if(u=="E")"E" else if(u=="Em")"Em" else "E"
+                when(u){
+                    "E","Em"->{val p=v("P");val t=v("t");pos(t,"Time");x=p*t;unit=if(id=="dailyEnergy")"kWh/day" else "kWh";formula="E = P × t";sub="E = $p × $t";steps=listOf("Multiply power in kW by time in hours.")}
+                    "P"->{val e=v("E");val t=v("t");pos(t,"Time");x=e/t;unit="kW";formula="P = E ÷ t";sub="P = $e ÷ $t";steps=listOf("Divide energy by operating time.")}
+                    else->{val e=v("E");val p=v("P");pos(p,"Power");x=e/p;unit="h";formula="t = E ÷ P";sub="t = $e ÷ $p";steps=listOf("Divide energy by average power.")}
+                }
+            }
+            "energyCost" -> when(u){
+                "Cost"->{val e=v("E");val r=v("Rate");x=e*r;unit="currency";formula="Cost = E × Rate";sub="Cost = $e × $r";steps=listOf("Multiply energy by tariff rate.")}
+                "E"->{val c=v("Cost");val r=v("Rate");pos(r,"Rate");x=c/r;unit="kWh";formula="E = Cost ÷ Rate";sub="E = $c ÷ $r";steps=listOf("Divide cost by tariff rate.")}
+                else->{val c=v("Cost");val e=v("E");pos(e,"Energy");x=c/e;unit="currency/kWh";formula="Rate = Cost ÷ E";sub="Rate = $c ÷ $e";steps=listOf("Divide cost by energy.")}
+            }
+            "monthlyEnergy" -> when(u){
+                "Em"->{val e=v("Ed");val d=v("d");x=e*d;unit="kWh";formula="Em = Ed × d";sub="Em = $e × $d";steps=listOf("Multiply daily energy by number of days.")}
+                "Ed"->{val e=v("Em");val d=v("d");pos(d,"Days");x=e/d;unit="kWh/day";formula="Ed = Em ÷ d";sub="Ed = $e ÷ $d";steps=listOf("Divide monthly energy by days.")}
+                else->{val e=v("Em");val d=v("Ed");pos(d,"Daily energy");x=e/d;unit="days";formula="d = Em ÷ Ed";sub="d = $e ÷ $d";steps=listOf("Divide monthly energy by daily energy.")}
+            }
+            "meterEnergy" -> when(u){
+                "E"->{val a=v("End");val b=v("Start");x=a-b;unit="kWh";formula="E = End − Start";sub="E = $a − $b";steps=listOf("Subtract initial reading from final reading.");require(x>=0){"Final reading cannot be lower than initial reading."}}
+                "End"->{val a=v("E");val b=v("Start");x=a+b;unit="kWh";formula="End = E + Start";sub="End = $a + $b";steps=listOf("Add energy consumed to initial reading.")}
+                else->{val a=v("End");val b=v("E");x=a-b;unit="kWh";formula="Start = End − E";sub="Start = $a − $b";steps=listOf("Subtract energy consumed from final reading.")}
+            }
+            "batteryRuntime" -> {val a=v("V");val b=v("Ah");val c=v("DOD");val d=v("P");val e=v("η");pos(d,"Load");require(c in 0.0..100.0 && e in 0.0..100.0){"Percentages must be 0 to 100."};x=a*b*(c/100)*(e/100)/d;unit="h";formula="t = V × Ah × DOD × η ÷ P";sub="t = $a × $b × ${c/100} × ${e/100} ÷ $d";steps=listOf("Calculate nominal battery energy in Wh.","Apply depth of discharge and inverter efficiency.","Divide by load power.")}
+            "batteryCapacity" -> {val a=v("P");val b=v("t");val c=v("V");val d=v("DOD");val e=v("η");pos(c,"Voltage");require(d>0 && d<=100 && e>0 && e<=100){"Percentages must be greater than 0 and no more than 100."};x=a*b/(c*(d/100)*(e/100));unit="Ah";formula="Ah = P × t ÷ (V × DOD × η)";sub="Ah = $a × $b ÷ ($c × ${d/100} × ${e/100})";steps=listOf("Calculate required energy in Wh.","Apply usable depth of discharge and efficiency.","Divide by battery voltage.")}
+            "convVoltage","convCurrent","convPower","convEnergy","convFrequency","convResistance","convCapacitance","convInductance","convLength" -> {
+                val factors=when(id){
+                    "convVoltage"->mapOf("V" to 1.0,"mV" to .001,"kV" to 1000.0)
+                    "convCurrent"->mapOf("A" to 1.0,"mA" to .001,"kA" to 1000.0)
+                    "convPower"->mapOf("W" to 1.0,"kW" to 1000.0,"MW" to 1e6)
+                    "convEnergy"->mapOf("Wh" to 3600.0,"kWh" to 3600000.0,"J" to 1.0,"MJ" to 1e6)
+                    "convFrequency"->mapOf("Hz" to 1.0,"kHz" to 1000.0,"MHz" to 1e6)
+                    "convResistance"->mapOf("Ω" to 1.0,"kΩ" to 1000.0,"MΩ" to 1e6)
+                    "convCapacitance"->mapOf("F" to 1.0,"μF" to 1e-6,"nF" to 1e-9)
+                    "convInductance"->mapOf("H" to 1.0,"mH" to .001,"μH" to 1e-6)
+                    else->mapOf("m" to 1.0,"mm" to .001,"km" to 1000.0)
+                }
+                val source=factors.keys.first{it!=u};val a=v(source);x=a*factors.getValue(source)/factors.getValue(u);unit=u;formula="Result = input × source factor ÷ target factor";sub="Result = $a × ${factors.getValue(source)} ÷ ${factors.getValue(u)}";steps=listOf("Convert input to base unit.","Convert base unit to selected target unit.")
+            }
+            "convTemperature" -> when(u){
+                "F"->{val a=v("C");x=a*9/5+32;unit="°F";formula="F = C × 9/5 + 32";sub="F = $a × 9/5 + 32";steps=listOf("Multiply Celsius by 9/5 and add 32.")}
+                "K"->{val a=v("C");x=a+273.15;unit="K";formula="K = C + 273.15";sub="K = $a + 273.15";steps=listOf("Add 273.15 to Celsius.")}
+                else->{val a=v("F");x=(a-32)*5/9;unit="°C";formula="C = (F − 32) × 5/9";sub="C = ($a − 32) × 5/9";steps=listOf("Subtract 32 from Fahrenheit and multiply by 5/9.")}
             }
 
             else -> error("Calculator not available.")

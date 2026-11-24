@@ -35,3 +35,7 @@ Engineering assumptions:
 - Load current is single-phase. Three-phase motor current assumes a balanced motor and uses line voltage, output power, power factor and efficiency.
 - Cable ampacity is not estimated from a generic formula. Select a cable using the applicable IEC/installation tables, installation method, ambient temperature, grouping and permissible voltage drop.
 - Verify all cable selections and protection settings against applicable standards, manufacturer data and site conditions.
+
+
+## Phase 4
+Adds 20 calculators across Energy & Consumption and Unit Conversions, bringing the catalog to 72 calculators. Battery runtime and capacity are estimates based on nominal voltage, rated Ah, user-entered depth of discharge, load and inverter efficiency. Actual battery performance varies with age, temperature, chemistry and discharge rate. Energy cost is energy multiplied by the entered tariff rate and excludes fixed charges, taxes, demand charges and tariff bands.

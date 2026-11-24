@@ -56,7 +56,7 @@ class CalculatorEngineTest {
 
 
 class PhaseThreeCalculatorTest {
-    @org.junit.Test fun completeCatalogHasFiftyTwoCalculators() { org.junit.Assert.assertEquals(52, CalculatorCatalog.all.size) }
+    @org.junit.Test fun completeCatalogHasFiftyTwoCalculators() { org.junit.Assert.assertEquals(72, CalculatorCatalog.all.size) }
     @org.junit.Test fun phaseThreeAddsEighteenCalculators() {
         org.junit.Assert.assertEquals(19, CalculatorCatalog.all.count { it.category == "Power Distribution" || it.category == "Electrical Machines" })
     }
@@ -88,4 +88,27 @@ class PhaseThreeCalculatorTest {
         val r=CalculatorCatalog.solve("motorCurrent","I",mapOf("Pout" to 15.0,"V" to 400.0,"pf" to 0.85,"η" to 90.0))
         org.junit.Assert.assertEquals(28.31,r.value,0.1)
     }
+}
+
+class PhaseFourCalculatorTest {
+ @org.junit.Test fun phaseFourHasTwentyCalculators() {
+  org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Energy & Consumption"})
+  org.junit.Assert.assertEquals(10,CalculatorCatalog.all.count{it.category=="Unit Conversions"})
+ }
+ @org.junit.Test fun energyCostExample() {
+  val r=CalculatorCatalog.solve("energyCost","Cost",mapOf("E" to 150.0,"Rate" to 60.0))
+  org.junit.Assert.assertEquals(9000.0,r.value,1e-9)
+ }
+ @org.junit.Test fun meterReadingExample() {
+  val r=CalculatorCatalog.solve("meterEnergy","E",mapOf("End" to 1250.0,"Start" to 1100.0))
+  org.junit.Assert.assertEquals(150.0,r.value,1e-9)
+ }
+ @org.junit.Test fun batteryRuntimeExample() {
+  val r=CalculatorCatalog.solve("batteryRuntime","t",mapOf("V" to 12.0,"Ah" to 100.0,"DOD" to 80.0,"P" to 200.0,"η" to 90.0))
+  org.junit.Assert.assertEquals(4.32,r.value,1e-9)
+ }
+ @org.junit.Test fun powerConversionExample() {
+  val r=CalculatorCatalog.solve("convPower","W",mapOf("kW" to 2.5))
+  org.junit.Assert.assertEquals(2500.0,r.value,1e-9)
+ }
 }
