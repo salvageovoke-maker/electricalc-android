@@ -71,6 +71,28 @@ private fun saveHistory(prefs:android.content.SharedPreferences,entries:List<His
     prefs.edit().putString("calculation_history",array.toString()).apply()
 }
 
+internal fun decodeFavoriteIds(raw:String?):List<String>{
+    return try{
+        val array=JSONArray(raw ?: "[]")
+        (0 until array.length()).mapNotNull{index->
+            array.optString(index).takeIf{it.isNotBlank() && it!="null"}
+        }.distinct()
+    }catch(_:Exception){ emptyList() }
+}
+
+internal fun encodeFavoriteIds(ids:Collection<String>):String{
+    val array=JSONArray()
+    ids.filter{it.isNotBlank()}.distinct().forEach{array.put(it)}
+    return array.toString()
+}
+
+private fun loadFavoriteIds(prefs:android.content.SharedPreferences):List<String> =
+    decodeFavoriteIds(prefs.getString("favorite_calculators","[]"))
+
+private fun saveFavoriteIds(prefs:android.content.SharedPreferences,ids:Collection<String>){
+    prefs.edit().putString("favorite_calculators",encodeFavoriteIds(ids)).apply()
+}
+
 private val LocalPrecision = compositionLocalOf { 4 }
 private val LocalHaptics = compositionLocalOf { true }
 
@@ -86,6 +108,7 @@ private fun ElectriCalcRoot(){
     var precision by remember { mutableIntStateOf(prefs.getInt("decimal_precision",4)) }
     var haptics by remember { mutableStateOf(prefs.getBoolean("haptic_feedback",true)) }
     val history= remember { mutableStateListOf<HistoryEntry>().apply { addAll(loadHistory(prefs)) } }
+    val favorites= remember { mutableStateListOf<String>().apply { addAll(loadFavoriteIds(prefs)) } }
     val systemDark=isSystemInDarkTheme()
     val darkMode=themeMode=="Dark" || (themeMode=="System default" && systemDark)
     val scheme=if(darkMode) darkColorScheme(
@@ -98,7 +121,8 @@ private fun ElectriCalcRoot(){
     CompositionLocalProvider(LocalPrecision provides precision,LocalHaptics provides haptics){
         MaterialTheme(colorScheme=scheme){
             ElectriCalcApp(
-                themeMode=themeMode,precision=precision,haptics=haptics,history=history,
+                themeMode=themeMode,precision=precision,haptics=haptics,history=history,favorites=favorites,
+                onFavoritesChange={saveFavoriteIds(prefs,favorites)},
                 onHistoryAdd={entry->
                     history.removeAll{it.id==entry.id}
                     history.add(0,entry)
@@ -147,6 +171,8 @@ private fun categoryIcon(name:String):ImageVector = when(name){
 private fun ElectriCalcApp(
     themeMode:String,precision:Int,haptics:Boolean,
     history:List<HistoryEntry> = emptyList(),
+    favorites:List<String> = emptyList(),
+    onFavoritesChange:()->Unit = {},
     onHistoryAdd:(HistoryEntry)->Unit = {},
     onHistoryDelete:(String)->Unit = {},
     onHistoryClear:()->Unit = {},
@@ -160,7 +186,6 @@ private fun ElectriCalcApp(
     var answer by remember{mutableStateOf<CalcAnswer?>(null)}
     var error by remember{mutableStateOf<String?>(null)}
     var showAbout by remember{mutableStateOf(false)}
-    val favorites=remember{mutableStateListOf<String>()}
     val drawerState= rememberDrawerState(DrawerValue.Closed)
     val scope= rememberCoroutineScope()
     val haptic=LocalHapticFeedback.current
@@ -257,7 +282,10 @@ private fun ElectriCalcApp(
                 calc!=null->CalculatorScreen(calc!!,answer,error,favorites.contains(calc!!.id),Modifier.padding(padding),
                     onHistoryAdd=onHistoryAdd,
                     onBack={calc=null;answer=null;error=null},
-                    onFavorite={if(favorites.contains(calc!!.id))favorites.remove(calc!!.id)else favorites.add(calc!!.id)},
+                    onFavorite={
+                        if(favorites.contains(calc!!.id))favorites.remove(calc!!.id)else favorites.add(calc!!.id)
+                        onFavoritesChange()
+                    },
                     onCalculate={u,values->
                         try{
                             val solved=CalculatorCatalog.solve(calc!!.id,u,values)

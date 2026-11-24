@@ -95,3 +95,12 @@ All 10 conversion tools use a source unit, one input value, and a target unit. T
 - SettingsScreen now accepts only the settings values and callbacks used by its caller.
 - Persistent history remains owned by ElectriCalcApp and continues to flow into HistoryScreen and calculator screens.
 - No calculator formulas, category accordion behavior, or saved-history storage were changed.
+
+
+## Version 1.9.3 persistent favorites
+
+- Favorites are loaded from local SharedPreferences when the app starts.
+- Adding or removing a calculator from Favorites immediately saves the updated list.
+- Favorite IDs are stored as JSON, deduplicated, and invalid stored data safely falls back to an empty list.
+- Existing favorite IDs remain compatible because the stored values are the existing calculator IDs.
+- Added unit tests for favorite serialization, duplicate removal, blank IDs, and malformed stored data.
